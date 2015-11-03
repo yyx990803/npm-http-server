@@ -1,4 +1,5 @@
 import { stat as statFile } from 'fs'
+import onHeaders from 'on-headers'
 import getExpirationDate from './getExpirationDate'
 import getPackageFile from './getPackageFile'
 
@@ -19,6 +20,11 @@ function sendServerError(res, error) {
 }
 
 function sendFile(res, file, expirationDate) {
+  // Cache-Control overrides Expires
+  onHeaders(res, function () {
+    res.removeHeader('Cache-Control')
+  })
+
   res.set('Expires', expirationDate.toGMTString()).sendFile(file)
 }
 

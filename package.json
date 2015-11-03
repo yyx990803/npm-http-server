@@ -21,6 +21,7 @@
     "express": "^4.13.3",
     "gunzip-maybe": "^1.2.1",
     "mkdirp": "^0.5.1",
+    "on-headers": "^1.0.1",
     "os-tmpdir": "^1.0.1",
     "request": "^2.65.0",
     "silent-npm-registry-client": "^1.0.0",
