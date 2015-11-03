@@ -1,5 +1,6 @@
 import { stat as statFile } from 'fs'
 import onHeaders from 'on-headers'
+import parseNPMPackageURL from './parseNPMPackageURL'
 import getExpirationDate from './getExpirationDate'
 import getPackageFile from './getPackageFile'
 
@@ -36,21 +37,14 @@ function sendFile(res, file, expirationDate) {
  * /history/umd/History.min.js (latest is implied)
  */
 function serveNPMPackageFile(req, res, next) {
-  const { path: pathname } = req
-  const match = pathname.match(/\/([^\/]+)/)
+  const url = parseNPMPackageURL(req.path)
 
-  if (match == null) {
-    sendInvalidURLError(res, pathname)
+  if (url == null) {
+    sendInvalidURLError(res, req.path)
     return next()
   }
 
-  const filename = pathname.substring(match[0].length)
-  const packageSpec = match[1]
-
-  if (filename.length < 2) {
-    sendInvalidURLError(res, pathname)
-    return next()
-  }
+  const { packageSpec, filename } = url
 
   getPackageFile(packageSpec, filename, function (error, file, version) {
     if (error) {
