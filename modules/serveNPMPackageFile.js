@@ -29,6 +29,9 @@ function sendFile(res, file, expirationDate) {
   res.set('Expires', expirationDate.toGMTString()).sendFile(file)
 }
 
+const IndexFile = require('path').resolve(__dirname, '../index.html')
+console.log(IndexFile)
+
 /**
  * Serves a file from an NPM package. Supported URL schemes are:
  *
@@ -37,6 +40,12 @@ function sendFile(res, file, expirationDate) {
  * /history/umd/History.min.js (latest is implied)
  */
 function serveNPMPackageFile(req, res, next) {
+  // TODO: Refactor this out.
+  if (req.path === '/') {
+    sendFile(res, IndexFile, new Date(Date.now() + 1000 * 60))
+    return
+  }
+
   const url = parseNPMPackageURL(req.path)
 
   if (url == null) {
