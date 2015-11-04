@@ -22,8 +22,8 @@ function getPackageFile(packageSpec, filename, callback) {
     } else {
       // Grab package info from NPM registry.
       getPackageInfo(name, version, function (error, info) {
-        if (error) {
-          callback(error)
+        if (error || info == null) {
+          callback(error, null)
           return
         }
 

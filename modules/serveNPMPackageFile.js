@@ -58,11 +58,11 @@ function serveNPMPackageFile(req, res, next) {
   getPackageFile(packageSpec, filename, function (error, file, version) {
     if (error) {
       sendServerError(res, error)
-    } else {
+    } else if (file) {
       statFile(file, function (error) {
         if (error) {
           if (error.code === 'ENOENT') {
-            sendNotFoundError(res, 'File "' + filename + '" in ' + packageSpec)
+            sendNotFoundError(res, 'File "' + filename + '" in package ' + packageSpec)
           } else {
             sendServerError(res, error)
           }
@@ -70,6 +70,8 @@ function serveNPMPackageFile(req, res, next) {
           sendFile(res, file, getExpirationDate(version))
         }
       })
+    } else {
+      sendNotFoundError(res, 'Package ' + packageSpec)
     }
   })
 }

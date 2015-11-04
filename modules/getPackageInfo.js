@@ -8,8 +8,8 @@ function getPackageInfo(packageName, packageVersion, callback) {
   const params = { timeout: 1000 }
 
   client.get(packageURI, params, function (error, info) {
-    if (error) {
-      callback(error)
+    if (error || info == null || info.versions == null) {
+      callback(error, null)
       return
     }
 
