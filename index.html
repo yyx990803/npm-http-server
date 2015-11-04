@@ -13,14 +13,21 @@
         padding: 50px 20px;
       }
     }
-    #wrapper {
+    header, #wrapper {
       max-width: 600px;
       margin: 0 auto;
+    }
+    header {
+      text-align: center;
     }
     </style>
   </head>
   <body>
-    <div id="wrapper">
+    <header>
+      <h1>npmcdn</h1>
+    </header>
+    <section id="wrapper">
+      <h1></h1>
       <p>npmcdn is an experiment in serving files directly out of npm packages over a CDN. Try a URL in the format <code>/package@version/path/to/file</code>.</p>
       <p>A few examples:</p>
       <ul>
@@ -48,6 +55,6 @@
 
       <h3>Feedback</h3>
       <p>If you think this is useful, I'd love to hear from you. Please reach out to <a href="https://twitter.com/mjackson">@mjackson</a> with any questions/concerns.</p>
-    </div>
+    </section>
   </body>
 </html>
