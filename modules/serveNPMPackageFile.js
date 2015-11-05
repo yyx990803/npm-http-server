@@ -30,7 +30,6 @@ function sendFile(res, file, expirationDate) {
 }
 
 const IndexFile = require('path').resolve(__dirname, '../index.html')
-console.log(IndexFile)
 
 /**
  * Serves a file from an NPM package. Supported URL schemes are:
