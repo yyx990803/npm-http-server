@@ -1,5 +1,5 @@
-import { stat as statFile } from 'fs'
-import onHeaders from 'on-headers'
+import mime from 'mime'
+import { stat as statFile, readFile } from 'fs'
 import parseNPMPackageURL from './parseNPMPackageURL'
 import getExpirationDate from './getExpirationDate'
 import getPackageFile from './getPackageFile'
@@ -21,12 +21,18 @@ function sendServerError(res, error) {
 }
 
 function sendFile(res, file, expirationDate) {
-  // Cache-Control overrides Expires
-  onHeaders(res, function () {
-    res.removeHeader('Cache-Control')
-  })
+  readFile(file, 'utf8', function (error, data) {
+    if (error) {
+      sendServerError(res, error)
+    } else {
+      res.writeHead(200, {
+        'Content-Type': mime.lookup(file) + '; charset=utf-8',
+        'Expires': expirationDate.toGMTString()
+      })
 
-  res.set('Expires', expirationDate.toGMTString()).sendFile(file)
+      res.end(data)
+    }
+  })
 }
 
 const IndexFile = require('path').resolve(__dirname, '../index.html')
