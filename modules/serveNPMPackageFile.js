@@ -1,41 +1,8 @@
-import mime from 'mime'
-import { stat as statFile, readFile } from 'fs'
+import { stat as statFile } from 'fs'
+import { sendInvalidURLError, sendServerError, sendNotFoundError, sendFile } from './ResponseUtils'
 import parseNPMPackageURL from './parseNPMPackageURL'
 import getExpirationDate from './getExpirationDate'
 import getPackageFile from './getPackageFile'
-
-function sendText(res, text) {
-  res.type('text/plain').send(text)
-}
-
-function sendInvalidURLError(res, url) {
-  sendText(res.status(403), 'Invalid URL: ' + url)
-}
-
-function sendNotFoundError(res, what) {
-  sendText(res.status(404), 'Not found: ' + what)
-}
-
-function sendServerError(res, error) {
-  sendText(res.status(500), 'Server error: ' + error.message)
-}
-
-function sendFile(res, file, expirationDate) {
-  readFile(file, 'utf8', function (error, data) {
-    if (error) {
-      sendServerError(res, error)
-    } else {
-      res.writeHead(200, {
-        'Content-Type': mime.lookup(file) + '; charset=utf-8',
-        'Expires': expirationDate.toGMTString()
-      })
-
-      res.end(data)
-    }
-  })
-}
-
-const IndexFile = require('path').resolve(__dirname, '../index.html')
 
 /**
  * Serves a file from an NPM package. Supported URL schemes are:
@@ -45,20 +12,20 @@ const IndexFile = require('path').resolve(__dirname, '../index.html')
  * /history/umd/History.min.js (latest is implied)
  */
 function serveNPMPackageFile(req, res, next) {
-  // TODO: Refactor this out.
-  if (req.path === '/') {
-    sendFile(res, IndexFile, new Date(Date.now() + 1000 * 60))
-    return
-  }
-
   const url = parseNPMPackageURL(req.path)
 
   if (url == null) {
     sendInvalidURLError(res, req.path)
-    return next()
+    return
   }
 
   const { packageSpec, filename } = url
+
+  if (filename == null) {
+    // TODO: Serve the "main" file. #1
+    sendInvalidURLError(res, req.path)
+    return
+  }
 
   getPackageFile(packageSpec, filename, function (error, file, version) {
     if (error) {

@@ -3,11 +3,13 @@ require('babel/register')
 
 var express = require('express')
 var serveNPMPackageFile = require('./modules/serveNPMPackageFile')
+var serveWebsite = require('./modules/serveWebsite')
 
 var port = process.env.PORT || process.env.npm_package_config_port
 var app = express()
 
 app.disable('x-powered-by')
+app.use(serveWebsite)
 app.use(serveNPMPackageFile)
 
 app.listen(port, function () {
