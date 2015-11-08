@@ -8,6 +8,7 @@ import parsePackageURL from './parsePackageURL'
 import getExpirationDate from './getExpirationDate'
 import getPackageInfo from './getPackageInfo'
 import getPackage from './getPackage'
+import getProperty from './getProperty'
 
 const TmpDir = tmpdir()
 const ResolveExtensions = [ '', '.js', '.json' ]
@@ -79,11 +80,15 @@ function serveNPMPackageFile(req, res) {
           }
         } else {
           const packageConfig = JSON.parse(data)
+          const mainPath = req.query && req.query.main || 'main'
 
-          // TODO: Add support for ?main query parameter. #1
-          filename = packageConfig.main
+          filename = getProperty(packageConfig, mainPath)
 
-          tryToFinish()
+          if (filename == null) {
+            sendNotFoundError(res, `property "${mainPath}" in ${packageName}@${version}/package.json`)
+          } else {
+            tryToFinish()
+          }
         }
       })
     }
