@@ -19,11 +19,8 @@ Then, use `npm start` to start the server.
 
 ## URL Format
 
-npm-http-server recognizes URLs in the format `/:packageSpec/:file` where:
+npm-http-server recognizes URLs in the format `/package@version/path/to/file` where:
 
-    packageSpec     The name of a package on npm + version number, e.g. history@1.12.5
-    file            The path to a file in that package
-
-Your `packageSpec` can also use an [npm dist-tag](https://docs.npmjs.com/cli/dist-tag) instead of a version number, or omit the version number entirely to automatically use the `latest` tag, but you won't get the same long-term caching benefits. An example URL looks like:
-
-    /history@1.12.5/umd/History.min.js
+    package         The @scope/name of an npm package (scope is optional)
+    version         The version, version range, or tag
+    /path/tofile    The path to a file in that package (optional, defaults to main module)
