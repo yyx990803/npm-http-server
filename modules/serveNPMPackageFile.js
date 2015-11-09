@@ -2,6 +2,7 @@ import tmpdir from 'os-tmpdir'
 import { parse as parseURL } from 'url'
 import { stat as statFile, readFile } from 'fs'
 import { join as joinPaths, basename } from 'path'
+import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import { sendFile, sendInvalidURLError, sendServerError, sendNotFoundError, sendRedirect } from './ResponseUtils'
 import createPackageURL from './createPackageURL'
 import parsePackageURL from './parsePackageURL'
@@ -138,7 +139,13 @@ function serveNPMPackageFile(req, res) {
       } else if (version in tags) {
         sendRedirect(res, createPackageURL(packageName, tags[version], filename, search))
       } else {
-        sendNotFoundError(res, `package ${packageName}@${version}`)
+        const maxVersion = maxSatisfyingVersion(Object.keys(versions), version)
+
+        if (maxVersion) {
+          sendRedirect(res, createPackageURL(packageName, maxVersion, filename, search))
+        } else {
+          sendNotFoundError(res, `package ${packageName}@${version}`)
+        }
       }
     })
   })
