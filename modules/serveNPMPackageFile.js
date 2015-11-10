@@ -85,11 +85,10 @@ function serveNPMPackageFile(req, res) {
 
           filename = getProperty(packageConfig, mainPath)
 
-          if (filename == null) {
-            sendNotFoundError(res, `property "${mainPath}" in ${packageName}@${version}/package.json`)
-          } else {
-            tryToFinish()
-          }
+          if (filename == null)
+            filename = '/index.js' // Default main is index.js, same as npm
+
+          tryToFinish()
         }
       })
     }
