@@ -21,14 +21,14 @@ export function sendServerError(res, error) {
   sendText(res.status(500), `Server error: ${error.message}`)
 }
 
-export function sendFile(res, file, expirationDate) {
+export function sendFile(res, file, maxAge=0) {
   readFile(file, 'utf8', function (error, data) {
     if (error) {
       sendServerError(res, error)
     } else {
       res.writeHead(200, {
         'Content-Type': `${mime.lookup(file)}; charset=utf-8`,
-        'Expires': expirationDate.toGMTString()
+        'Cache-Control': `public, max-age=${maxAge}`
       })
 
       res.end(data)

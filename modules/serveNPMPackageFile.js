@@ -6,10 +6,10 @@ import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import { sendFile, sendInvalidURLError, sendServerError, sendNotFoundError, sendRedirect } from './ResponseUtils'
 import createPackageURL from './createPackageURL'
 import parsePackageURL from './parsePackageURL'
-import getExpirationDate from './getExpirationDate'
 import getPackageInfo from './getPackageInfo'
 import getPackage from './getPackage'
 import getProperty from './getProperty'
+import getMaxAge from './getMaxAge'
 
 const TmpDir = tmpdir()
 const ResolveExtensions = [ '', '.js', '.json' ]
@@ -68,7 +68,7 @@ function serveNPMPackageFile(req, res) {
         } else if (file == null) {
           sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
         } else {
-          sendFile(res, file, getExpirationDate(version))
+          sendFile(res, file, getMaxAge(version))
         }
       })
     } else {
