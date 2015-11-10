@@ -26,7 +26,7 @@ export function sendFile(res, file, maxAge=0) {
     if (error) {
       sendServerError(res, error)
     } else {
-      res.writeHead(200, {
+      res.set({
         'Content-Type': `${mime.lookup(file)}; charset=utf-8`,
         'Cache-Control': `public, max-age=${maxAge}`
       })

@@ -112,7 +112,7 @@ function serveNPMPackageFile(req, res) {
 
         return
       }
-      
+
       if (info == null || info.versions == null) {
         sendServerError(res, new Error(`Unable to retrieve info for package ${packageName}`))
         return
