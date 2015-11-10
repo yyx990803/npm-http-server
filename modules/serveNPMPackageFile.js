@@ -8,27 +8,11 @@ import createPackageURL from './createPackageURL'
 import parsePackageURL from './parsePackageURL'
 import getPackageInfo from './getPackageInfo'
 import getPackage from './getPackage'
+import resolveFile from './resolveFile'
 import getProperty from './getProperty'
 import getMaxAge from './getMaxAge'
 
 const TmpDir = tmpdir()
-const ResolveExtensions = [ '', '.js', '.json' ]
-
-function resolveFile(file, callback) {
-  ResolveExtensions.reduceRight(function (next, ext) {
-    return function () {
-      statFile(file + ext, function (error, stat) {
-        if (stat && stat.isFile()) {
-          callback(null, file + ext)
-        } else if (error && error.code !== 'ENOENT') {
-          callback(error)
-        } else {
-          next()
-        }
-      })
-    }
-  }, callback)()
-}
 
 /**
  * Serves a file from an NPM package. Supported URL schemes are:
