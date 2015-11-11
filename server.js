@@ -1,8 +1,8 @@
 /*eslint-disable no-console */
-require('babel/register')
+require('babel-core/register')
 
 var express = require('express')
-var serveNPMPackageFile = require('./modules/serveNPMPackageFile')
+var serveNPMPackageFile = require('./modules/serveNPMPackageFile').default
 
 var port = process.env.PORT || process.env.npm_package_config_port
 var app = express()
