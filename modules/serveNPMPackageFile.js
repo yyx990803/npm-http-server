@@ -57,23 +57,13 @@ function serveNPMPackageFile(req, res) {
       })
     } else {
       readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, data) {
-        if (error) {
-          if (error.code === 'ENOENT') {
-            sendServerError(res, new Error(`No package.json in package ${packageName}@${version}`))
-          } else {
-            sendServerError(res, error)
-          }
-        } else {
-          const packageConfig = JSON.parse(data)
-          const mainPath = req.query && req.query.main || 'main'
+        if (data)
+          filename = getProperty(JSON.parse(data), req.query && req.query.main || 'main')
 
-          filename = getProperty(packageConfig, mainPath)
+        if (filename == null)
+          filename = '/index.js' // Default main is index.js, same as npm
 
-          if (filename == null)
-            filename = '/index.js' // Default main is index.js, same as npm
-
-          tryToFinish()
-        }
+        tryToFinish()
       })
     }
   }
