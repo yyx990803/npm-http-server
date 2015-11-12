@@ -28,10 +28,10 @@ const TmpDir = tmpdir()
  * /history@latest/umd/History.min.js (redirects to version)
  */
 function serveNPMPackageFile(req, res) {
-  const url = parsePackageURL(req.path)
+  const url = parsePackageURL(req.url)
 
   if (url == null) {
-    sendInvalidURLError(res, req.path)
+    sendInvalidURLError(res, req.url)
     return
   }
 

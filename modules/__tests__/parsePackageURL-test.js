@@ -81,4 +81,13 @@ describe('parsePackageURL', function () {
       search: null
     })
   })
+
+  it('correctly parses a pathname like /name?search', function () {
+    expect(parsePackageURL('/name?search')).toEqual({
+      packageName: 'name',
+      version: null,
+      filename: null,
+      search: '?search'
+    })
+  })
 })
