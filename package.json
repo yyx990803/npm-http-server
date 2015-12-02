@@ -1,6 +1,5 @@
 {
   "name": "npm-http-server",
-  "private": true,
   "version": "1.0.0",
   "description": "An HTTP server for files in npm packages",
   "author": "Michael Jackson",
