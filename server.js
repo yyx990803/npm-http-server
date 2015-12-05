@@ -6,8 +6,10 @@ var serveNPMPackageFile = require('./modules/serveNPMPackageFile').default
 
 var port = process.env.PORT || process.env.npm_package_config_port
 var app = express()
+var cors = require('cors')
 
 app.disable('x-powered-by')
+app.use(cors())
 app.use(express.static('public', { maxAge: 60000 }))
 app.use(serveNPMPackageFile)
 
