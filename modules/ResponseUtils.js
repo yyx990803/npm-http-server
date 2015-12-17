@@ -1,5 +1,5 @@
 import mime from 'mime'
-import { readFile } from 'fs'
+import { createReadStream } from 'fs'
 
 export function sendHTML(res, html) {
   res.type('text/html').end(html)
@@ -22,18 +22,18 @@ export function sendServerError(res, error) {
 }
 
 export function sendFile(res, file, maxAge=0) {
-  readFile(file, 'utf8', function (error, data) {
-    if (error) {
-      sendServerError(res, error)
-    } else {
-      res.set({
-        'Content-Type': `${mime.lookup(file)}; charset=utf-8`,
-        'Cache-Control': `public, max-age=${maxAge}`
-      })
+  const fileStream = createReadStream(file)
 
-      res.end(data)
-    }
+  fileStream.on('error', function (error) {
+    sendServerError(res, error)
   })
+
+  res.set({
+    'Content-Type': `${mime.lookup(file)}; charset=utf-8`,
+    'Cache-Control': `public, max-age=${maxAge}`
+  })
+
+  fileStream.pipe(res)
 }
 
 export function sendRedirect(res, location, status=302) {
