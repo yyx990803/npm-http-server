@@ -16,9 +16,10 @@ const tryToFinish = ({ tarballDir }) =>
       readFilePromised(joinPaths(tarballDir, 'bower.json'), 'utf8'),
       readFilePromised(joinPaths(tarballDir, 'package.json'), 'utf8')
     ])
-    .then(([ bowerJson ]) => {
-      const main = getProperty(JSON.parse(bowerJson), 'main')
-      const files = [ 'bower.json' ].concat(Array.isArray(main) ? main : [ main ])
+    .then(([ bowerJson, packageJson ]) => {
+      const bowerConfig = Object.assign(JSON.parse(bowerJson), { version: packageJson.version })
+      const main = getProperty(bowerConfig, 'main')
+      const files = Array.isArray(main) ? main : [ main ]
       const bowerZip = joinPaths(tarballDir, 'bower.zip')
       const out = createWriteStream(bowerZip)
 
@@ -28,6 +29,11 @@ const tryToFinish = ({ tarballDir }) =>
         zip.pipe(out)
         out.on('error', reject)
         out.on('finish', () => resolve(bowerZip))
+
+        // add `bower.json` file with updated version
+        zip.append(JSON.stringify(bowerConfig, null, 2), { name: 'bower.json' })
+
+        // add all files from `main` section of Bower config
         files.forEach(file => zip.file(joinPaths(tarballDir, file), { name: file }))
         zip.finalize()
       })
