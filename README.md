@@ -27,10 +27,8 @@ npm-http-server recognizes URLs in the format `/package@version/path/to/file` wh
 
 ### Bower package url format
 
-npm-http-server recognizes a special path to serveBower packages `/package@version/bower.zip` where:
-
-    package         The @scope/name of an npm package (scope is optional)
-    version         The version, version range, or tag
+npm-http-server recognizes a special path to serve Bower packages - `/bower.zip`.
+Rest of the URL follows the same convention as any other file.
 
 `bower.zip` file is created dynamically based on `bower.json` found within a package.
 It contains of, actually, `bower.json` and all files, listed in its `main` section.
