@@ -3,67 +3,83 @@ import { stat as statFile, readFile, createWriteStream } from 'fs'
 import getProperty from './getProperty'
 import archiver from 'archiver'
 
-function promisify(func) {
-  return function (...args) {
-    return new Promise(function (resolve, reject) {
-      func(...args, function (error, data) {
-        error ? reject(error) : resolve(data)
-      })
+function generateZip({ tarballDir, packageVersion }, callback) {
+
+  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', function (error, bowerJson) {
+    if (error) {
+      callback(error)
+      return
+    }
+
+    const bowerConfig = Object.assign(JSON.parse(bowerJson), { version: packageVersion })
+    const main = getProperty(bowerConfig, 'main')
+    const files = Array.isArray(main) ? main : [ main ]
+    const bowerZip = joinPaths(tarballDir, 'bower.zip')
+    const out = createWriteStream(bowerZip)
+
+    const zip = archiver('zip', {})
+
+    // we are dealing with streams so error may be emit several times,
+    // but we can call callback only once
+    let resolved = false
+
+
+    function onError(error) {
+      if (resolved)
+        return
+
+      resolved = true
+      callback(error)
+    }
+
+    function onFinish() {
+      if (resolved)
+        return
+
+      resolved = true
+      callback(null, bowerZip)
+    }
+
+    zip.on('error', onError)
+    out.on('error', onError)
+    out.on('finish', onFinish)
+
+    zip.pipe(out)
+
+    // add `bower.json` file with updated version
+    zip.append(JSON.stringify(bowerConfig, null, 2), { name: 'bower.json' })
+
+    // add all files from `main` section of Bower config
+    files.forEach(function (file) {
+      zip.file(joinPaths(tarballDir, file), { name: file })
     })
-  }
-}
-
-const readFilePromised = promisify(readFile)
-const statFilePromised = promisify(statFile)
-
-function tryToFinish({ tarballDir }) {
-  Promise.all([
-      readFilePromised(joinPaths(tarballDir, 'bower.json'), 'utf8'),
-      readFilePromised(joinPaths(tarballDir, 'package.json'), 'utf8')
-    ])
-    .then(function ([ bowerJson, packageJson ]) {
-      const bowerConfig = Object.assign(JSON.parse(bowerJson), { version: packageJson.version })
-      const main = getProperty(bowerConfig, 'main')
-      const files = Array.isArray(main) ? main : [ main ]
-      const bowerZip = joinPaths(tarballDir, 'bower.zip')
-      const out = createWriteStream(bowerZip)
-
-      return new Promise(function (resolve, reject) {
-        const zip = archiver('zip', {})
-        zip.on('error', reject)
-        zip.pipe(out)
-        out.on('error', reject)
-        out.on('finish', function () {
-          resolve(bowerZip)
-        })
-
-        // add `bower.json` file with updated version
-        zip.append(JSON.stringify(bowerConfig, null, 2), { name: 'bower.json' })
-
-        // add all files from `main` section of Bower config
-        files.forEach(function (file) {
-          zip.file(joinPaths(tarballDir, file), { name: file })
-        })
-        zip.finalize()
-      })
-    })
+    zip.finalize()
+  })
 }
 
 function createBowerPackage({ tarballDir }, callback) {
-  statFilePromised(joinPaths(tarballDir, 'bower.json'))
-    .then(function (stat) {
-      if (!stat.isFile()) {
-        throw new Error('bower.json is not a file')
-      }
-      return tryToFinish({ tarballDir })
-        .then(function (bowerZip) {
-          callback(null, bowerZip)
-        })
-        .catch(callback)
-    })
-    .catch(function () {
+  statFile(joinPaths(tarballDir, 'bower.json'), function (error, stat) {
+    if (error) {
       callback(new Error('bower.json is required to create bower.zip package'))
+      return
+    }
+
+    if (!stat.isFile()) {
+      callback(new Error('bower.json is not a file'))
+      return
+    }
+
+    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, packageJson) {
+      if (error) {
+        callback(error)
+        return
+      }
+
+      const packageVersion = getProperty(JSON.parse(packageJson), 'version')
+
+      generateZip({ tarballDir, packageVersion }, callback)
     })
+  })
 }
 
 export default createBowerPackage
