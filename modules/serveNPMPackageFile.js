@@ -50,8 +50,7 @@ function serveNPMPackageFile(req, res) {
         if (error) {
           sendServerError(res, error)
         } else if (file === null) {
-          sendNotFoundError(res,
-            `could not generate bower.zip for package ${packageName}@${version}`)
+          sendNotFoundError(res, `bower.zip in package ${packageName}@${version}`)
         } else {
           sendFile(res, file, getMaxAge(version))
         }
