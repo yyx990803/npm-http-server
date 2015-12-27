@@ -10,6 +10,7 @@ npm-http-server is a small HTTP server that serves up files from npm packages.
 
     registryURL     The URL of the npm registry, defaults to https://registry.npmjs.org
     port            The TCP port to bind, defaults to 5000
+    bowerBundle     The URL to use for Bower zip files, defaults to /bower.zip
 
 Set configuration variables using [`npm config`](https://docs.npmjs.com/cli/config):
 
