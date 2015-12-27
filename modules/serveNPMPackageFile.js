@@ -11,6 +11,9 @@ import getPackage from './getPackage'
 import resolveFile from './resolveFile'
 import getProperty from './getProperty'
 import getMaxAge from './getMaxAge'
+import createBowerPackage from './createBowerPackage'
+
+const BOWER_BUNDLE = process.env.BOWER_BUNDLE || process.env.npm_package_config_bowerBundle
 
 const TmpDir = tmpdir()
 
@@ -43,7 +46,18 @@ function serveNPMPackageFile(req, res) {
   let tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
   function tryToFinish() {
-    if (filename) {
+    if (filename === BOWER_BUNDLE) {
+      createBowerPackage({ tarballDir }, function (error, file) {
+        if (error) {
+          sendServerError(res, error)
+        } else if (file === null) {
+          sendNotFoundError(res,
+            `could not generate bower.zip for package ${packageName}@${version}`)
+        } else {
+          sendFile(res, file, getMaxAge(version))
+        }
+      })
+    } else if (filename) {
       const file = joinPaths(tarballDir, filename)
 
       resolveFile(file, function (error, file) {
