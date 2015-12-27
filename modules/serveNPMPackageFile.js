@@ -13,8 +13,7 @@ import getProperty from './getProperty'
 import getMaxAge from './getMaxAge'
 import createBowerPackage from './createBowerPackage'
 
-const BOWER_BUNDLE = process.env.BOWER_BUNDLE || process.env.npm_package_config_bowerBundle
-
+const BowerBundle = process.env.npm_package_config_bowerBundle
 const TmpDir = tmpdir()
 
 /**
@@ -46,7 +45,7 @@ function serveNPMPackageFile(req, res) {
   let tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
   function tryToFinish() {
-    if (filename === BOWER_BUNDLE) {
+    if (filename === BowerBundle) {
       createBowerPackage({ tarballDir }, function (error, file) {
         if (error) {
           sendServerError(res, error)
