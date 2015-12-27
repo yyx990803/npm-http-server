@@ -1,7 +1,7 @@
 import tmpdir from 'os-tmpdir'
 import { parse as parseURL } from 'url'
 import { stat as statFile, readFile } from 'fs'
-import { join as joinPaths, basename } from 'path'
+import { join as joinPaths } from 'path'
 import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import { sendFile, sendInvalidURLError, sendServerError, sendNotFoundError, sendRedirect } from './ResponseUtils'
 import createPackageURL from './createPackageURL'
@@ -42,7 +42,7 @@ function serveNPMPackageFile(req, res) {
   if (version == null)
     version = 'latest' // Use the latest version by default
 
-  let tarballDir = joinPaths(TmpDir, packageName + '-' + version)
+  const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
   function tryToFinish() {
     if (filename === BowerBundle) {
@@ -110,9 +110,6 @@ function serveNPMPackageFile(req, res) {
         // A valid request for a package we haven't downloaded yet.
         const packageConfig = versions[version]
         const tarballURL = parseURL(packageConfig.dist.tarball)
-        const tarballName = basename(tarballURL.pathname, '.tgz')
-
-        tarballDir = joinPaths(TmpDir, tarballName)
 
         getPackage(tarballURL, tarballDir, function (error) {
           if (error) {
