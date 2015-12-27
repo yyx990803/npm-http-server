@@ -8,7 +8,7 @@ function getPackage(tarballURL, outputDir, callback) {
     if (error) {
       callback(error)
     } else {
-      let callbackCalled = false
+      let callbackWasCalled = false
 
       get({ url: tarballURL })
         .pipe(gunzip())
@@ -20,10 +20,11 @@ function getPackage(tarballURL, outputDir, callback) {
         }))
         .on('finish', callback)
         .on('error', function (error) {
-          if (!callbackCalled) // LOL request
-            callback(error)
+          if (callbackWasCalled) // LOL request
+            return
 
-          callbackCalled = true
+          callbackWasCalled = true
+          callback(error)
         })
     }
   })

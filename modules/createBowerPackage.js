@@ -17,9 +17,6 @@ function generateZip(tarballDir, packageVersion, callback) {
     const out = createWriteStream(bowerZip)
 
     const zip = archiver('zip', {})
-
-    // we are dealing with streams so error may be emit several times,
-    // but we can call callback only once
     let callbackWasCalled = false
 
     function onError(error) {
