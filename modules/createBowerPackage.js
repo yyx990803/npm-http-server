@@ -3,15 +3,14 @@ import { stat as statFile, readFile, createWriteStream } from 'fs'
 import getProperty from './getProperty'
 import archiver from 'archiver'
 
-function generateZip({ tarballDir, packageVersion }, callback) {
-
-  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', function (error, bowerJson) {
+function generateZip(tarballDir, packageVersion, callback) {
+  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', function (error, bowerJSON) {
     if (error) {
       callback(error)
       return
     }
 
-    const bowerConfig = Object.assign(JSON.parse(bowerJson), { version: packageVersion })
+    const bowerConfig = Object.assign(JSON.parse(bowerJSON), { version: packageVersion })
     const main = getProperty(bowerConfig, 'main')
     const files = Array.isArray(main) ? main : [ main ]
     const bowerZip = joinPaths(tarballDir, 'bower.zip')
@@ -21,22 +20,21 @@ function generateZip({ tarballDir, packageVersion }, callback) {
 
     // we are dealing with streams so error may be emit several times,
     // but we can call callback only once
-    let resolved = false
-
+    let callbackWasCalled = false
 
     function onError(error) {
-      if (resolved)
+      if (callbackWasCalled)
         return
 
-      resolved = true
+      callbackWasCalled = true
       callback(error)
     }
 
     function onFinish() {
-      if (resolved)
+      if (callbackWasCalled)
         return
 
-      resolved = true
+      callbackWasCalled = true
       callback(null, bowerZip)
     }
 
@@ -53,31 +51,27 @@ function generateZip({ tarballDir, packageVersion }, callback) {
     files.forEach(function (file) {
       zip.file(joinPaths(tarballDir, file), { name: file })
     })
+
     zip.finalize()
   })
 }
 
-function createBowerPackage({ tarballDir }, callback) {
+function createBowerPackage(tarballDir, callback) {
   statFile(joinPaths(tarballDir, 'bower.json'), function (error, stat) {
-    if (error) {
-      callback(new Error('bower.json is required to create bower.zip package'))
+    if (error || !stat.isFile()) {
+      callback(new Error('Missing bower.json'))
       return
     }
 
-    if (!stat.isFile()) {
-      callback(new Error('bower.json is not a file'))
-      return
-    }
-
-    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, packageJson) {
+    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, packageJSON) {
       if (error) {
         callback(error)
         return
       }
 
-      const packageVersion = getProperty(JSON.parse(packageJson), 'version')
+      const packageVersion = getProperty(JSON.parse(packageJSON), 'version')
 
-      generateZip({ tarballDir, packageVersion }, callback)
+      generateZip(tarballDir, packageVersion, callback)
     })
   })
 }

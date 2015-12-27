@@ -46,7 +46,7 @@ function serveNPMPackageFile(req, res) {
 
   function tryToFinish() {
     if (filename === BowerBundle) {
-      createBowerPackage({ tarballDir }, function (error, file) {
+      createBowerPackage(tarballDir, function (error, file) {
         if (error) {
           sendServerError(res, error)
         } else if (file === null) {
