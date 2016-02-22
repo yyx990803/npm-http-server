@@ -1,9 +1,7 @@
-import { get } from 'request'
 import LRU from 'lru-cache'
+import { get } from 'request'
 
-const RegistryURL = process.env.npm_package_config_registryURL
-
-function getPackageInfoFromRegistry(packageName, callback) {
+function getPackageInfoFromRegistry(registryURL, packageName, callback) {
   let encodedPackageName
   if (packageName.charAt(0) === '@') {
     encodedPackageName = `@${encodeURIComponent(packageName.substring(1))}`
@@ -12,7 +10,7 @@ function getPackageInfoFromRegistry(packageName, callback) {
   }
 
   get({
-    uri: `${RegistryURL}/${encodedPackageName}`,
+    uri: `${registryURL}/${encodedPackageName}`,
     headers: {
       'Accept': 'application/json'
     }
@@ -27,17 +25,18 @@ const RegistryCache = LRU({
   maxAge: OneMinute
 })
 
-function getPackageInfo(packageName, callback) {
-  let info = RegistryCache.get(packageName)
+function getPackageInfo(registryURL, packageName, callback) {
+  const cacheKey = registryURL + packageName
+  const info = RegistryCache.get(cacheKey)
 
   if (info) {
     callback(null, info)
   } else {
-    getPackageInfoFromRegistry(packageName, function (error, info) {
-      if (info)
-        RegistryCache.set(packageName, info)
+    getPackageInfoFromRegistry(registryURL, packageName, function (error, registryInfo) {
+      if (registryInfo)
+        RegistryCache.set(cacheKey, registryInfo)
 
-      callback(error, info)
+      callback(error, registryInfo)
     })
   }
 }
