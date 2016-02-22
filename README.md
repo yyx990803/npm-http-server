@@ -8,19 +8,24 @@ npm-http-server is a small HTTP server that serves up files from npm packages.
 
 ## Configuration and Usage
 
-    registryURL     The URL of the npm registry, defaults to https://registry.npmjs.org
-    port            The TCP port to bind, defaults to 5000
-    bowerBundle     The URL to use for Bower zip files, defaults to /bower.zip
+Use `createServer` to create a server instance, passing it the options it needs to connect to [npm](https://npmjs.org):
 
-Set configuration variables using [`npm config`](https://docs.npmjs.com/cli/config):
+```js
+import { createServer } from 'npm-http-server'
 
-    $ npm config set npm-http-server:port 8080
+const server = createServer({
+  registryURL: 'https://registry.npmjs.org',  // The URL of the npm registry, defaults to the public registry
+  bowerBundle: '/bower.zip'                   // A special pathname for generating Bower bundles, defaults to "/bower.zip"
+})
 
-Then, use `npm start` to start the server.
+server.listen(8080)
+```
+
+`server` is a standard [node HTTP server](https://nodejs.org/api/http.html#http_class_http_server).
 
 ## URL Format
 
-npm-http-server recognizes URLs in the format `/package@version/path/to/file` where:
+In npm-http-server, the URL is the API. The server recognizes URLs in the format `/package@version/path/to/file` where:
 
     package         The @scope/name of an npm package (scope is optional)
     version         The version, version range, or tag
