@@ -1,7 +1,7 @@
 {
   "name": "npm-http-server",
   "version": "2.0.0",
-  "description": "An HTTP server for files in npm packages",
+  "description": "Serve files from npm packages over HTTP",
   "author": "Michael Jackson",
   "license": "MIT",
   "main": "lib",
