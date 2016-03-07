@@ -1,6 +1,6 @@
 # npm-http-server
 
-npm-http-server is a small HTTP server that serves up files from npm packages.
+npm-http-server is an HTTP server that serves files from npm packages.
 
 ## Installation
 
@@ -15,7 +15,7 @@ Then, use as you would anything else:
 import { createServer } from 'npm-http-server'
 
 // not using an ES6 transpiler
-var createServer = require('http-client').createServer
+var createServer = require('npm-http-server').createServer
 ```
 
 ## Configuration and Usage
