@@ -1,7 +1,7 @@
 import tar from 'tar-fs'
 import mkdirp from 'mkdirp'
 import gunzip from 'gunzip-maybe'
-import { get } from 'request'
+import { fetch } from 'http-client'
 
 function getPackage(tarballURL, outputDir, callback) {
   mkdirp(outputDir, function (error) {
@@ -10,22 +10,24 @@ function getPackage(tarballURL, outputDir, callback) {
     } else {
       let callbackWasCalled = false
 
-      get({ url: tarballURL })
-        .pipe(gunzip())
-        .pipe(tar.extract(outputDir, {
-          map: function (header) {
-            header.name = header.name.replace(/^package\//, '')
-            return header
-          }
-        }))
-        .on('finish', callback)
-        .on('error', function (error) {
-          if (callbackWasCalled) // LOL request
-            return
+      fetch(tarballURL).then(response => {
+        response.body
+          .pipe(gunzip())
+          .pipe(tar.extract(outputDir, {
+            map: function (header) {
+              header.name = header.name.replace(/^package\//, '')
+              return header
+            }
+          }))
+          .on('finish', callback)
+          .on('error', function (error) {
+            if (callbackWasCalled) // LOL node streams
+              return
 
-          callbackWasCalled = true
-          callback(error)
-        })
+            callbackWasCalled = true
+            callback(error)
+          })
+      })
     }
   })
 }

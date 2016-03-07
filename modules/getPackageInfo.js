@@ -1,5 +1,10 @@
 import LRU from 'lru-cache'
-import { get } from 'request'
+import { createFetch, accept, parseJSON } from 'http-client'
+
+const fetch = createFetch(
+  accept('application/json'),
+  parseJSON()
+)
 
 function getPackageInfoFromRegistry(registryURL, packageName, callback) {
   let encodedPackageName
@@ -9,14 +14,12 @@ function getPackageInfoFromRegistry(registryURL, packageName, callback) {
     encodedPackageName = encodeURIComponent(packageName)
   }
 
-  get({
-    uri: `${registryURL}/${encodedPackageName}`,
-    headers: {
-      'Accept': 'application/json'
-    }
-  }, function (error, res) {
-    callback(error, res && res.body ? JSON.parse(res.body) : null)
-  })
+  const url = `${registryURL}/${encodedPackageName}`
+
+  fetch(url).then(
+    response => callback(null, response),
+    callback
+  )
 }
 
 const OneMinute = 60 * 1000

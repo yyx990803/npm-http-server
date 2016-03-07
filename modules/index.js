@@ -30,11 +30,16 @@ function parsePackageURL(pathname) {
   if (match == null)
     return null
 
-  return {                            // If the URL is /@scope/name@version/path.js?bundle:
-    packageName: match[1],            // @scope/name
-    version: decodeParam(match[2]),   // version
-    filename: decodeParam(match[3]),  // /path.js
-    search: url.search                // ?bundle
+  const packageName = match[1]
+  const version = decodeParam(match[2]) || 'latest'
+  const filename = decodeParam(match[3])
+  const { search } = parseURL(pathname)
+
+  return {           // If the URL is /@scope/name@version/path.js?bundle:
+    packageName,     // @scope/name
+    version,         // version
+    filename,        // /path.js
+    search           // ?bundle
   }
 }
 
@@ -97,9 +102,22 @@ function resolveFile(file, callback) {
  * Creates and returns a function that can be used in the "request"
  * event of a standard node HTTP server. Options are:
  *
- * - registryURL      The URL of the npm registry (optional, defaults to https://registry.npmjs.org)
- * - bowerBundle      A special pathname that is used to create and serve zip files required by Bower
- *                    (optional, defaults to "/bower.zip")
+ * - registryURL    The URL of the npm registry (optional, defaults to https://registry.npmjs.org)
+ * - bowerBundle    A special pathname that is used to create and serve zip files required by Bower
+ *                  (optional, defaults to "/bower.zip")
+ *
+ * Supported URL schemes are:
+ *
+ * /history@1.12.5/umd/History.min.js (recommended)
+ * /history@1.12.5 (package.json's main is implied)
+ *
+ * Additionally, the following URLs are supported but will return a
+ * temporary (302) redirect:
+ *
+ * /history (redirects to version, latest is implied)
+ * /history/umd/History.min.js (redirects to version, latest is implied)
+ * /history@latest/umd/History.min.js (redirects to version)
+ * /history@^1/umd/History.min.js (redirects to max satisfying version)
  */
 export function createRequestHandler(options={}) {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
@@ -112,8 +130,7 @@ export function createRequestHandler(options={}) {
       return sendInvalidURLError(res, req.url)
 
     let { filename } = url
-    const { packageName, search } = url
-    const version = url.version || 'latest'
+    const { packageName, version, search } = url
     const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
     function tryToFinish() {
@@ -157,16 +174,14 @@ export function createRequestHandler(options={}) {
         return tryToFinish() // Best case: we already have this package on disk.
 
       // Fetch package info from NPM registry.
-      getPackageInfo(registryURL, packageName, function (error, info) {
-        if (error) {
-          if (error.statusCode === 404) {
-            sendNotFoundError(res, `package "${packageName}"`)
-          } else {
-            sendServerError(res, error)
-          }
+      getPackageInfo(registryURL, packageName, function (error, response) {
+        if (error)
+          return sendServerError(res, error)
 
-          return
-        }
+        if (response.status === 404)
+          return sendNotFoundError(res, `package "${packageName}"`)
+
+        const info = response.jsonData
 
         if (info == null || info.versions == null)
           return sendServerError(res, new Error(`Unable to retrieve info for package ${packageName}`))
@@ -199,21 +214,13 @@ export function createRequestHandler(options={}) {
       })
     })
   }
+
+  return handleRequest
 }
 
 /**
- * Creates and returns an HTTP server that serves files from NPM packages.
- * Supported URL schemes are:
- *
- * /history@1.12.5/umd/History.min.js (recommended)
- * /history@1.12.5 (package.json's main is implied)
- *
- * Additionally, the following URLs are supported but will return a
- * temporary (302) redirect:
- *
- * /history (redirects to version, latest is implied)
- * /history/umd/History.min.js (redirects to version, latest is implied)
- * /history@latest/umd/History.min.js (redirects to version)
+ * Creates and returns an HTTP server that serves files
+ * from NPM packages.
  */
 export function createServer(options) {
   return http.createServer(
