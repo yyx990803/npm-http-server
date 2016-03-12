@@ -1,6 +1,5 @@
 import { join as joinPaths } from 'path'
 import { stat as statFile, readFile, createWriteStream } from 'fs'
-import getProperty from './getProperty'
 import archiver from 'archiver'
 
 function generateZip(tarballDir, packageVersion, callback) {
@@ -11,7 +10,7 @@ function generateZip(tarballDir, packageVersion, callback) {
     }
 
     const bowerConfig = Object.assign(JSON.parse(bowerJSON), { version: packageVersion })
-    const main = getProperty(bowerConfig, 'main')
+    const main = bowerConfig.main
     const files = Array.isArray(main) ? main : [ main ]
     const bowerZip = joinPaths(tarballDir, 'bower.zip')
     const out = createWriteStream(bowerZip)
@@ -66,7 +65,7 @@ function createBowerPackage(tarballDir, callback) {
         return
       }
 
-      const packageVersion = getProperty(JSON.parse(packageJSON), 'version')
+      const packageVersion = JSON.parse(packageJSON).version
 
       generateZip(tarballDir, packageVersion, callback)
     })

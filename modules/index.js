@@ -7,7 +7,6 @@ import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import createBowerPackage from './createBowerPackage'
 import getPackageInfo from './getPackageInfo'
 import getPackage from './getPackage'
-import getProperty from './getProperty'
 import {
   sendNotFoundError,
   sendInvalidURLError,
@@ -62,18 +61,16 @@ const OneMinute = 60
 const OneDay = OneMinute * 60 * 24
 const OneYear = OneDay * 365
 
-function isVersionNumber(version) {
-  return (/^\d/).test(version)
-}
+const isVersionNumber = (version) =>
+  (/^\d/).test(version)
 
-function getMaxAge(packageVersion) {
-  if (!isVersionNumber(packageVersion))
-    return OneMinute
+const getMaxAge = (packageVersion) =>
+  isVersionNumber(packageVersion) ? OneYear : OneMinute
 
-  // Since NPM package versions can't be overwritten,
-  // cache this file for a very long time.
-  return OneYear
-}
+const checkLocalCache = (dir, callback) =>
+  statFile(joinPaths(dir, 'package.json'), (error, stats) => {
+    callback(stats && stats.isFile())
+  })
 
 const ResolveExtensions = [ '', '.js', '.json' ]
 
@@ -82,11 +79,11 @@ const ResolveExtensions = [ '', '.js', '.json' ]
  * "lib/index.json" depending on which one is available, similar
  * to how require('lib/index') does.
  */
-function resolveFile(file, callback) {
-  ResolveExtensions.reduceRight(function (next, ext) {
-    return function () {
-      statFile(file + ext, function (error, stat) {
-        if (stat && stat.isFile()) {
+const resolveFile = (file, callback) => {
+  ResolveExtensions.reduceRight((next, ext) => {
+    return () => {
+      statFile(file + ext, (error, stats) => {
+        if (stats && stats.isFile()) {
           callback(null, file + ext)
         } else if (error && error.code !== 'ENOENT') {
           callback(error)
@@ -119,7 +116,7 @@ function resolveFile(file, callback) {
  * /history@latest/umd/History.min.js (redirects to version)
  * /history@^1/umd/History.min.js (redirects to max satisfying version)
  */
-export function createRequestHandler(options={}) {
+export const createRequestHandler = (options = {}) => {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
   const bowerBundle = options.bowerBundle || '/bower.zip'
 
@@ -129,8 +126,7 @@ export function createRequestHandler(options={}) {
     if (url == null)
       return sendInvalidURLError(res, req.url)
 
-    let { filename } = url
-    const { packageName, version, search } = url
+    const { packageName, version, filename, search } = url
     const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
     function tryToFinish() {
@@ -145,9 +141,7 @@ export function createRequestHandler(options={}) {
           }
         })
       } else if (filename) {
-        const file = joinPaths(tarballDir, filename)
-
-        resolveFile(file, function (error, file) {
+        resolveFile(joinPaths(tarballDir, filename), (error, file) => {
           if (error) {
             sendServerError(res, error)
           } else if (file == null) {
@@ -157,20 +151,30 @@ export function createRequestHandler(options={}) {
           }
         })
       } else {
-        readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, data) {
-          if (data)
-            filename = getProperty(JSON.parse(data), req.query && req.query.main || 'main')
+        readFile(joinPaths(tarballDir, 'package.json'), 'utf8', (error, data) => {
+          if (error)
+            return sendServerError(res, error)
 
-          if (filename == null)
-            filename = '/index.js' // Default main is index.js, same as npm
+          // Default main is index, same as npm
+          const packageConfig = JSON.parse(data)
+          const mainProperty = (req.query && req.query.main) || 'main'
+          const mainFilename = packageConfig[mainProperty] || 'index'
 
-          tryToFinish()
+          resolveFile(joinPaths(tarballDir, mainFilename), (error, file) => {
+            if (error) {
+              sendServerError(res, error)
+            } else if (file == null) {
+              sendNotFoundError(res, `main file "${mainFilename}" in package ${packageName}@${version}`)
+            } else {
+              sendFile(res, file, getMaxAge(version))
+            }
+          })
         })
       }
     }
 
-    statFile(joinPaths(tarballDir, 'package.json'), function (error, stat) {
-      if (stat && stat.isFile())
+    checkLocalCache(tarballDir, (isCached) => {
+      if (isCached)
         return tryToFinish() // Best case: we already have this package on disk.
 
       // Fetch package info from NPM registry.
@@ -222,8 +226,7 @@ export function createRequestHandler(options={}) {
  * Creates and returns an HTTP server that serves files
  * from NPM packages.
  */
-export function createServer(options) {
-  return http.createServer(
+export const createServer = (options) =>
+  http.createServer(
     createRequestHandler(options)
   )
-}
