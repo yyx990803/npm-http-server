@@ -79,12 +79,24 @@ const ResolveExtensions = [ '', '.js', '.json' ]
  * "lib/index.json" depending on which one is available, similar
  * to how require('lib/index') does.
  */
-const resolveFile = (file, callback) => {
+const resolveFile = (file, autoIndex, callback) => {
   ResolveExtensions.reduceRight((next, ext) => {
+    const filename = file + ext
+
     return () => {
-      statFile(file + ext, (error, stats) => {
+      statFile(filename, (error, stats) => {
         if (stats && stats.isFile()) {
-          callback(null, file + ext)
+          callback(null, filename)
+        } else if (autoIndex && stats && stats.isDirectory()) {
+          resolveFile(joinPaths(filename, 'index'), false, (error, indexFile) => {
+            if (error) {
+              callback(error)
+            } else if (indexFile) {
+              callback(null, indexFile)
+            } else {
+              next()
+            }
+          })
         } else if (error && error.code !== 'ENOENT') {
           callback(error)
         } else {
@@ -134,14 +146,14 @@ export const createRequestHandler = (options = {}) => {
         createBowerPackage(tarballDir, function (error, file) {
           if (error) {
             sendServerError(res, error)
-          } else if (file === null) {
+          } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${packageName}@${version}`)
           } else {
             sendFile(res, file, getMaxAge(version))
           }
         })
       } else if (filename) {
-        resolveFile(joinPaths(tarballDir, filename), (error, file) => {
+        resolveFile(joinPaths(tarballDir, filename), false, (error, file) => {
           if (error) {
             sendServerError(res, error)
           } else if (file == null) {
@@ -160,7 +172,7 @@ export const createRequestHandler = (options = {}) => {
           const mainProperty = (req.query && req.query.main) || 'main'
           const mainFilename = packageConfig[mainProperty] || 'index'
 
-          resolveFile(joinPaths(tarballDir, mainFilename), (error, file) => {
+          resolveFile(joinPaths(tarballDir, mainFilename), true, (error, file) => {
             if (error) {
               sendServerError(res, error)
             } else if (file == null) {
