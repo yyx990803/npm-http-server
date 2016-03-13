@@ -1,7 +1,7 @@
 import mime from 'mime'
 import { stat as statFile, createReadStream } from 'fs'
 
-export function sendText(res, statusCode, text) {
+export const sendText = (res, statusCode, text) => {
   res.writeHead(statusCode, {
     'Content-Type': 'text/plain',
     'Content-Length': text.length
@@ -10,19 +10,16 @@ export function sendText(res, statusCode, text) {
   res.end(text)
 }
 
-export function sendInvalidURLError(res, url) {
+export const sendInvalidURLError = (res, url) =>
   sendText(res, 403, `Invalid URL: ${url}`)
-}
 
-export function sendNotFoundError(res, what) {
+export const sendNotFoundError = (res, what) =>
   sendText(res, 404, `Not found: ${what}`)
-}
 
-export function sendServerError(res, error) {
+export const sendServerError = (res, error) =>
   sendText(res, 500, `Server error: ${error.message}`)
-}
 
-export function sendRedirect(res, location, statusCode=302) {
+export const sendRedirect = (res, location, statusCode = 302) => {
   const html = `<p>You are being redirected to <a href="${location}">${location}</a>`
 
   res.writeHead(statusCode, {
@@ -34,7 +31,7 @@ export function sendRedirect(res, location, statusCode=302) {
   res.end(html)
 }
 
-export function sendFile(res, file, maxAge=0) {
+export const sendFile = (res, file, maxAge = 0) => {
   statFile(file, function (error, stat) {
     if (error) {
       sendServerError(res, error)

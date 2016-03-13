@@ -18,11 +18,10 @@ import {
 const TmpDir = tmpdir()
 const URLFormat = /^\/((?:@[^\/@]+\/)?[^\/@]+)(?:@([^\/]+))?(\/.+)?$/
 
-function decodeParam(param) {
-  return param && decodeURIComponent(param)
-}
+const decodeParam = (param) =>
+  param && decodeURIComponent(param)
 
-function parsePackageURL(pathname) {
+const parsePackageURL = (pathname) => {
   const url = parseURL(pathname)
   const match = URLFormat.exec(url.pathname)
 
@@ -42,7 +41,7 @@ function parsePackageURL(pathname) {
   }
 }
 
-function createPackageURL(packageName, version, filename, search) {
+const createPackageURL = (packageName, version, filename, search) => {
   let pathname = `/${packageName}`
 
   if (version != null)
