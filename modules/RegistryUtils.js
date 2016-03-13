@@ -28,7 +28,7 @@ const RegistryCache = LRU({
   maxAge: OneMinute
 })
 
-function getPackageInfo(registryURL, packageName, callback) {
+export const getPackageInfo = (registryURL, packageName, callback) => {
   const cacheKey = registryURL + packageName
   const info = RegistryCache.get(cacheKey)
 
@@ -43,5 +43,3 @@ function getPackageInfo(registryURL, packageName, callback) {
     })
   }
 }
-
-export default getPackageInfo

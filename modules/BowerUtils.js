@@ -2,7 +2,7 @@ import { join as joinPaths } from 'path'
 import { stat as statFile, readFile, createWriteStream } from 'fs'
 import archiver from 'archiver'
 
-function generateZip(tarballDir, packageVersion, callback) {
+const generateZip = (tarballDir, packageVersion, callback) => {
   readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', function (error, bowerJSON) {
     if (error) {
       callback(error)
@@ -52,7 +52,7 @@ function generateZip(tarballDir, packageVersion, callback) {
   })
 }
 
-function createBowerPackage(tarballDir, callback) {
+export const createBowerPackage = (tarballDir, callback) => {
   statFile(joinPaths(tarballDir, 'bower.json'), function (error, stat) {
     if (error || !stat.isFile()) {
       callback(new Error('Missing bower.json'))
@@ -71,5 +71,3 @@ function createBowerPackage(tarballDir, callback) {
     })
   })
 }
-
-export default createBowerPackage

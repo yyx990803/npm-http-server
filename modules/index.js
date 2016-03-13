@@ -1,12 +1,12 @@
 import http from 'http'
+import tmpdir from 'os-tmpdir'
 import { parse as parseURL } from 'url'
 import { join as joinPaths } from 'path'
 import { stat as statFile, readFile } from 'fs'
-import tmpdir from 'os-tmpdir'
 import { maxSatisfying as maxSatisfyingVersion } from 'semver'
-import createBowerPackage from './createBowerPackage'
-import getPackageInfo from './getPackageInfo'
-import getPackage from './getPackage'
+import { parsePackageURL, createPackageURL, getPackage } from './PackageUtils'
+import { getPackageInfo } from './RegistryUtils'
+import { createBowerPackage } from './BowerUtils'
 import {
   sendNotFoundError,
   sendInvalidURLError,
@@ -16,45 +16,6 @@ import {
 } from './ResponseUtils'
 
 const TmpDir = tmpdir()
-const URLFormat = /^\/((?:@[^\/@]+\/)?[^\/@]+)(?:@([^\/]+))?(\/.+)?$/
-
-const decodeParam = (param) =>
-  param && decodeURIComponent(param)
-
-const parsePackageURL = (pathname) => {
-  const url = parseURL(pathname)
-  const match = URLFormat.exec(url.pathname)
-
-  if (match == null)
-    return null
-
-  const packageName = match[1]
-  const version = decodeParam(match[2]) || 'latest'
-  const filename = decodeParam(match[3])
-  const { search } = parseURL(pathname)
-
-  return {           // If the URL is /@scope/name@version/path.js?bundle:
-    packageName,     // @scope/name
-    version,         // version
-    filename,        // /path.js
-    search           // ?bundle
-  }
-}
-
-const createPackageURL = (packageName, version, filename, search) => {
-  let pathname = `/${packageName}`
-
-  if (version != null)
-    pathname += `@${version}`
-
-  if (filename != null)
-    pathname += filename
-
-  if (search)
-    pathname += search
-
-  return pathname
-}
 
 const OneMinute = 60
 const OneDay = OneMinute * 60 * 24
@@ -131,7 +92,7 @@ export const createRequestHandler = (options = {}) => {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
   const bowerBundle = options.bowerBundle || '/bower.zip'
 
-  return function handleRequest(req, res) {
+  const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
 
     if (url == null)
@@ -140,9 +101,9 @@ export const createRequestHandler = (options = {}) => {
     const { packageName, version, filename, search } = url
     const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
-    function tryToFinish() {
+    const tryToFinish = () => {
       if (filename === bowerBundle) {
-        createBowerPackage(tarballDir, function (error, file) {
+        createBowerPackage(tarballDir, (error, file) => {
           if (error) {
             sendServerError(res, error)
           } else if (file == null) {
@@ -189,7 +150,7 @@ export const createRequestHandler = (options = {}) => {
         return tryToFinish() // Best case: we already have this package on disk.
 
       // Fetch package info from NPM registry.
-      getPackageInfo(registryURL, packageName, function (error, response) {
+      getPackageInfo(registryURL, packageName, (error, response) => {
         if (error)
           return sendServerError(res, error)
 
@@ -208,7 +169,7 @@ export const createRequestHandler = (options = {}) => {
           const packageConfig = versions[version]
           const tarballURL = parseURL(packageConfig.dist.tarball)
 
-          getPackage(tarballURL, tarballDir, function (error) {
+          getPackage(tarballURL, tarballDir, (error) => {
             if (error) {
               sendServerError(res, error)
             } else {

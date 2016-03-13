@@ -32,7 +32,7 @@ export const sendRedirect = (res, location, statusCode = 302) => {
 }
 
 export const sendFile = (res, file, maxAge = 0) => {
-  statFile(file, function (error, stat) {
+  statFile(file, (error, stat) => {
     if (error) {
       sendServerError(res, error)
     } else {
@@ -44,7 +44,7 @@ export const sendFile = (res, file, maxAge = 0) => {
 
       const stream = createReadStream(file)
 
-      stream.on('error', function (error) {
+      stream.on('error', (error) => {
         sendServerError(res, error)
       })
 
