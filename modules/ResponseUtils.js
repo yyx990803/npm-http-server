@@ -25,7 +25,7 @@ export const sendRedirect = (res, location, statusCode = 302) => {
   res.writeHead(statusCode, {
     'Content-Type': 'text/html',
     'Content-Length': html.length,
-    'Location': location
+    Location: location
   })
 
   res.end(html)

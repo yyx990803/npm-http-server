@@ -129,7 +129,12 @@ export const createRequestHandler = (options = {}) => {
 
           // Default main is index, same as npm
           const packageConfig = JSON.parse(data)
-          const mainProperty = (req.query && req.query.main) || 'main'
+          const queryMain = req.query && req.query.main
+
+          if (queryMain && !(queryMain in packageConfig))
+            return sendNotFoundError(res, `field "${queryMain}" in package.json of ${packageName}@${version}`)
+
+          const mainProperty = queryMain || 'main'
           const mainFilename = packageConfig[mainProperty] || 'index'
 
           resolveFile(joinPaths(tarballDir, mainFilename), true, (error, file) => {

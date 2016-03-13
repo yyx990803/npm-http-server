@@ -3,7 +3,7 @@ import { stat as statFile, readFile, createWriteStream } from 'fs'
 import archiver from 'archiver'
 
 const generateZip = (tarballDir, packageVersion, callback) => {
-  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', function (error, bowerJSON) {
+  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', (error, bowerJSON) => {
     if (error) {
       callback(error)
       return
@@ -18,7 +18,7 @@ const generateZip = (tarballDir, packageVersion, callback) => {
     const zip = archiver('zip', {})
     let callbackWasCalled = false
 
-    function onError(error) {
+    const onError = (error) => {
       if (callbackWasCalled)
         return
 
@@ -26,7 +26,7 @@ const generateZip = (tarballDir, packageVersion, callback) => {
       callback(error)
     }
 
-    function onFinish() {
+    const onFinish = () => {
       if (callbackWasCalled)
         return
 
@@ -44,7 +44,7 @@ const generateZip = (tarballDir, packageVersion, callback) => {
     zip.append(JSON.stringify(bowerConfig, null, 2), { name: 'bower.json' })
 
     // add all files from `main` section of Bower config
-    files.forEach(function (file) {
+    files.forEach(file => {
       zip.file(joinPaths(tarballDir, file), { name: file })
     })
 
@@ -53,13 +53,13 @@ const generateZip = (tarballDir, packageVersion, callback) => {
 }
 
 export const createBowerPackage = (tarballDir, callback) => {
-  statFile(joinPaths(tarballDir, 'bower.json'), function (error, stat) {
+  statFile(joinPaths(tarballDir, 'bower.json'), (error, stat) => {
     if (error || !stat.isFile()) {
       callback(new Error('Missing bower.json'))
       return
     }
 
-    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', function (error, packageJSON) {
+    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', (error, packageJSON) => {
       if (error) {
         callback(error)
         return

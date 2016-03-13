@@ -1,4 +1,4 @@
-import LRU from 'lru-cache'
+import createLRUCache from 'lru-cache'
 import { createFetch, accept, parseJSON } from 'http-client'
 
 const fetch = createFetch(
@@ -6,7 +6,7 @@ const fetch = createFetch(
   parseJSON()
 )
 
-function getPackageInfoFromRegistry(registryURL, packageName, callback) {
+const getPackageInfoFromRegistry = (registryURL, packageName, callback) => {
   let encodedPackageName
   if (packageName.charAt(0) === '@') {
     encodedPackageName = `@${encodeURIComponent(packageName.substring(1))}`
@@ -23,7 +23,7 @@ function getPackageInfoFromRegistry(registryURL, packageName, callback) {
 }
 
 const OneMinute = 60 * 1000
-const RegistryCache = LRU({
+const RegistryCache = createLRUCache({
   max: 500,
   maxAge: OneMinute
 })
@@ -35,7 +35,7 @@ export const getPackageInfo = (registryURL, packageName, callback) => {
   if (info) {
     callback(null, info)
   } else {
-    getPackageInfoFromRegistry(registryURL, packageName, function (error, registryInfo) {
+    getPackageInfoFromRegistry(registryURL, packageName, (error, registryInfo) => {
       if (registryInfo)
         RegistryCache.set(cacheKey, registryInfo)
 

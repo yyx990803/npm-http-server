@@ -45,7 +45,7 @@ export const createPackageURL = (packageName, version, filename, search) => {
 }
 
 export const getPackage = (tarballURL, outputDir, callback) => {
-  mkdirp(outputDir, function (error) {
+  mkdirp(outputDir, (error) => {
     if (error) {
       callback(error)
     } else {
@@ -55,13 +55,13 @@ export const getPackage = (tarballURL, outputDir, callback) => {
         response.body
           .pipe(gunzip())
           .pipe(tar.extract(outputDir, {
-            map: function (header) {
+            map(header) {
               header.name = header.name.replace(/^package\//, '')
               return header
             }
           }))
           .on('finish', callback)
-          .on('error', function (error) {
+          .on('error', (error) => {
             if (callbackWasCalled) // LOL node streams
               return
 
