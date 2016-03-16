@@ -12,7 +12,8 @@ import {
   sendInvalidURLError,
   sendServerError,
   sendRedirect,
-  sendFile
+  sendFile,
+  sendText
 } from './ResponseUtils'
 
 const TmpDir = tmpdir()
@@ -127,13 +128,19 @@ export const createRequestHandler = (options = {}) => {
           if (error)
             return sendServerError(res, error)
 
-          // Default main is index, same as npm
-          const packageConfig = JSON.parse(data)
+          let packageConfig
+          try {
+            packageConfig = JSON.parse(data)
+          } catch (error) {
+            return sendText(res, 500, `Error parsing package.json: ${error.message}`)
+          }
+
           const queryMain = req.query && req.query.main
 
           if (queryMain && !(queryMain in packageConfig))
             return sendNotFoundError(res, `field "${queryMain}" in package.json of ${packageName}@${version}`)
 
+          // Default main is index, same as npm
           const mainProperty = queryMain || 'main'
           const mainFilename = packageConfig[mainProperty] || 'index'
 
