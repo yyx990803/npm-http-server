@@ -61,3 +61,7 @@ In npm-http-server, the URL is the API. The server recognizes URLs in the format
 To get a Bower bundle from a package that supports it use the `/bower.zip` file path. The zip archive that Bower needs is created dynamically based on the config in `bower.json`. The archive contains `bower.json` and all files listed in its `main` section. For convenience, the `version` number is automatically replaced with the one from `package.json` so there is no need to manually update it.
 
 **Please note: *We do NOT recommend JavaScript libraries use Bower*.** It was originally written to solve the problem of bundling CSS and other static assets together with JavaScript in a single package. However, that problem is much more ably solved by bundlers like webpack and Browserify at build time. Additionally, Bower requires JavaScript libraries to check their build into GitHub (see [why this is bad](https://medium.com/@kentcdodds/why-i-don-t-commit-generated-files-to-master-a4d76382564#.txdxyz5gy)) and publish to the Bower registry, both of which are extra overhead that can be avoided by publishing just the source to npm and using a postinstall script to generate the build.
+
+## Issues
+
+If you discover a problem with this code or its documentation, please [send a pull request](https://help.github.com/articles/using-pull-requests/) with the changes you'd like to see and I'll be happy to discuss further with you. Thank you!
