@@ -22,12 +22,6 @@ const OneMinute = 60
 const OneDay = OneMinute * 60 * 24
 const OneYear = OneDay * 365
 
-const isVersionNumber = (version) =>
-  (/^\d/).test(version)
-
-const getMaxAge = (packageVersion, redirectTTL) =>
-  isVersionNumber(packageVersion) ? OneYear : redirectTTL
-
 const checkLocalCache = (dir, callback) =>
   statFile(joinPaths(dir, 'package.json'), (error, stats) => {
     callback(stats && stats.isFile())
@@ -75,7 +69,7 @@ const resolveFile = (file, autoIndex, callback) => {
  * - registryURL    The URL of the npm registry (optional, defaults to https://registry.npmjs.org)
  * - bowerBundle    A special pathname that is used to create and serve zip files required by Bower
  *                  (optional, defaults to "/bower.zip")
- * - redirectTTL    The TTL (in seconds) for redirects
+ * - redirectTTL    The TTL (in seconds) for redirects (optional, defaults to 0)
  *
  * Supported URL schemes are:
  *
@@ -93,7 +87,7 @@ const resolveFile = (file, autoIndex, callback) => {
 export const createRequestHandler = (options = {}) => {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
   const bowerBundle = options.bowerBundle || '/bower.zip'
-  const redirectTTL = options.redirectTTL || OneMinute
+  const redirectTTL = options.redirectTTL || 0
 
   const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
@@ -104,7 +98,7 @@ export const createRequestHandler = (options = {}) => {
     const { packageName, version, filename, search } = url
     const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
-    const tryToFinish = () => {
+    const serveFile = () => {
       if (filename === bowerBundle) {
         createBowerPackage(tarballDir, (error, file) => {
           if (error) {
@@ -112,7 +106,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${packageName}@${version}`)
           } else {
-            sendFile(res, file, getMaxAge(version, redirectTTL))
+            sendFile(res, file, OneYear)
           }
         })
       } else if (filename) {
@@ -122,7 +116,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
           } else {
-            sendFile(res, file, getMaxAge(version, redirectTTL))
+            sendFile(res, file, OneYear)
           }
         })
       } else {
@@ -152,7 +146,7 @@ export const createRequestHandler = (options = {}) => {
             } else if (file == null) {
               sendNotFoundError(res, `main file "${mainFilename}" in package ${packageName}@${version}`)
             } else {
-              sendFile(res, file, getMaxAge(version, redirectTTL))
+              sendFile(res, file, OneYear)
             }
           })
         })
@@ -161,7 +155,7 @@ export const createRequestHandler = (options = {}) => {
 
     checkLocalCache(tarballDir, (isCached) => {
       if (isCached)
-        return tryToFinish() // Best case: we already have this package on disk.
+        return serveFile() // Best case: we already have this package on disk.
 
       // Fetch package info from NPM registry.
       getPackageInfo(registryURL, packageName, (error, response) => {
@@ -187,16 +181,16 @@ export const createRequestHandler = (options = {}) => {
             if (error) {
               sendServerError(res, error)
             } else {
-              tryToFinish()
+              serveFile()
             }
           })
         } else if (version in tags) {
-          sendRedirect(res, createPackageURL(packageName, tags[version], filename, search))
+          sendRedirect(res, createPackageURL(packageName, tags[version], filename, search), redirectTTL)
         } else {
           const maxVersion = maxSatisfyingVersion(Object.keys(versions), version)
 
           if (maxVersion) {
-            sendRedirect(res, createPackageURL(packageName, maxVersion, filename, search))
+            sendRedirect(res, createPackageURL(packageName, maxVersion, filename, search), redirectTTL)
           } else {
             sendNotFoundError(res, `package ${packageName}@${version}`)
           }

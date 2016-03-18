@@ -19,12 +19,13 @@ export const sendNotFoundError = (res, what) =>
 export const sendServerError = (res, error) =>
   sendText(res, 500, `Server error: ${error.message}`)
 
-export const sendRedirect = (res, location, statusCode = 302) => {
+export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
   const html = `<p>You are being redirected to <a href="${location}">${location}</a>`
 
   res.writeHead(statusCode, {
     'Content-Type': 'text/html',
     'Content-Length': html.length,
+    'Cache-Control': `public, max-age=${maxAge}`,
     Location: location
   })
 
