@@ -25,8 +25,8 @@ const OneYear = OneDay * 365
 const isVersionNumber = (version) =>
   (/^\d/).test(version)
 
-const getMaxAge = (packageVersion) =>
-  isVersionNumber(packageVersion) ? OneYear : OneMinute
+const getMaxAge = (packageVersion, redirectTTL) =>
+  isVersionNumber(packageVersion) ? OneYear : redirectTTL
 
 const checkLocalCache = (dir, callback) =>
   statFile(joinPaths(dir, 'package.json'), (error, stats) => {
@@ -75,6 +75,7 @@ const resolveFile = (file, autoIndex, callback) => {
  * - registryURL    The URL of the npm registry (optional, defaults to https://registry.npmjs.org)
  * - bowerBundle    A special pathname that is used to create and serve zip files required by Bower
  *                  (optional, defaults to "/bower.zip")
+ * - redirectTTL    The TTL (in seconds) for redirects
  *
  * Supported URL schemes are:
  *
@@ -92,6 +93,7 @@ const resolveFile = (file, autoIndex, callback) => {
 export const createRequestHandler = (options = {}) => {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
   const bowerBundle = options.bowerBundle || '/bower.zip'
+  const redirectTTL = options.redirectTTL || OneMinute
 
   const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
@@ -110,7 +112,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${packageName}@${version}`)
           } else {
-            sendFile(res, file, getMaxAge(version))
+            sendFile(res, file, getMaxAge(version, redirectTTL))
           }
         })
       } else if (filename) {
@@ -120,7 +122,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
           } else {
-            sendFile(res, file, getMaxAge(version))
+            sendFile(res, file, getMaxAge(version, redirectTTL))
           }
         })
       } else {
@@ -150,7 +152,7 @@ export const createRequestHandler = (options = {}) => {
             } else if (file == null) {
               sendNotFoundError(res, `main file "${mainFilename}" in package ${packageName}@${version}`)
             } else {
-              sendFile(res, file, getMaxAge(version))
+              sendFile(res, file, getMaxAge(version, redirectTTL))
             }
           })
         })
@@ -207,8 +209,7 @@ export const createRequestHandler = (options = {}) => {
 }
 
 /**
- * Creates and returns an HTTP server that serves files
- * from NPM packages.
+ * Creates and returns an HTTP server that serves files from NPM packages.
  */
 export const createServer = (options) =>
   http.createServer(
