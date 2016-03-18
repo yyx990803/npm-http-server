@@ -33,7 +33,8 @@ import { createServer } from 'npm-http-server'
 
 const server = createServer({
   registryURL: 'https://registry.npmjs.org',  // The URL of the npm registry, defaults to the public registry
-  bowerBundle: '/bower.zip'                   // A special pathname for generating Bower bundles, defaults to "/bower.zip"
+  bowerBundle: '/bower.zip',                  // A special pathname for generating Bower bundles, defaults to "/bower.zip"
+  redirectTTL: 60                             // The time (in seconds) to cache 302 responses
 })
 
 server.listen(8080)
