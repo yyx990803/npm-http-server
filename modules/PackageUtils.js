@@ -4,7 +4,7 @@ import gunzip from 'gunzip-maybe'
 import mkdirp from 'mkdirp'
 import tar from 'tar-fs'
 
-const URLFormat = /^\/((?:@[^\/@]+\/)?[^\/@]+)(?:@([^\/]+))?(\/.+)?$/
+const URLFormat = /^\/((?:@[^\/@]+\/)?[^\/@]+)(?:@([^\/]+))?(\/.*)?$/
 
 const decodeParam = (param) =>
   param && decodeURIComponent(param)

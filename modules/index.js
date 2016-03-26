@@ -5,6 +5,7 @@ import { join as joinPaths } from 'path'
 import { stat as statFile, readFile } from 'fs'
 import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import { parsePackageURL, createPackageURL, getPackage } from './PackageUtils'
+import { generateDirectoryIndexHTML } from './IndexUtils'
 import { getPackageInfo } from './RegistryUtils'
 import { createBowerPackage } from './BowerUtils'
 import {
@@ -13,7 +14,8 @@ import {
   sendServerError,
   sendRedirect,
   sendFile,
-  sendText
+  sendText,
+  sendHTML
 } from './ResponseUtils'
 
 const TmpDir = tmpdir()
@@ -30,11 +32,11 @@ const checkLocalCache = (dir, callback) =>
 const ResolveExtensions = [ '', '.js', '.json' ]
 
 /**
- * Resolves a path like "lib/index" into "lib/index.js" or
- * "lib/index.json" depending on which one is available, similar
- * to how require('lib/index') does.
+ * Resolves a path like "lib/file" into "lib/file.js" or
+ * "lib/file.json" depending on which one is available, similar
+ * to how require('lib/file') does.
  */
-const resolveFile = (file, autoIndex, callback) => {
+const resolveFile = (file, useIndex, callback) => {
   ResolveExtensions.reduceRight((next, ext) => {
     const filename = file + ext
 
@@ -42,7 +44,7 @@ const resolveFile = (file, autoIndex, callback) => {
       statFile(filename, (error, stats) => {
         if (stats && stats.isFile()) {
           callback(null, filename)
-        } else if (autoIndex && stats && stats.isDirectory()) {
+        } else if (useIndex && stats && stats.isDirectory()) {
           resolveFile(joinPaths(filename, 'index'), false, (error, indexFile) => {
             if (error) {
               callback(error)
@@ -66,10 +68,11 @@ const resolveFile = (file, autoIndex, callback) => {
  * Creates and returns a function that can be used in the "request"
  * event of a standard node HTTP server. Options are:
  *
- * - registryURL    The URL of the npm registry (optional, defaults to https://registry.npmjs.org)
+ * - registryURL    The URL of the npm registry (defaults to https://registry.npmjs.org)
  * - bowerBundle    A special pathname that is used to create and serve zip files required by Bower
- *                  (optional, defaults to "/bower.zip")
- * - redirectTTL    The TTL (in seconds) for redirects (optional, defaults to 0)
+ *                  (defaults to "/bower.zip")
+ * - redirectTTL    The TTL (in seconds) for redirects (defaults to 0)
+ * - autoIndex      Automatically generate index HTML pages for directories (defaults to true)
  *
  * Supported URL schemes are:
  *
@@ -88,6 +91,7 @@ export const createRequestHandler = (options = {}) => {
   const registryURL = options.registryURL || 'https://registry.npmjs.org'
   const bowerBundle = options.bowerBundle || '/bower.zip'
   const redirectTTL = options.redirectTTL || 0
+  const autoIndex = options.autoIndex !== false
 
   const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
@@ -110,16 +114,34 @@ export const createRequestHandler = (options = {}) => {
           }
         })
       } else if (filename) {
-        resolveFile(joinPaths(tarballDir, filename), false, (error, file) => {
+        const filepath = joinPaths(tarballDir, filename)
+
+        // Try to serve the file in the URL, or at least a directory index page.
+        resolveFile(filepath, false, (error, file) => {
           if (error) {
             sendServerError(res, error)
-          } else if (file == null) {
-            sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
-          } else {
+          } else if (file) {
             sendFile(res, file, OneYear)
+          } else if (autoIndex) {
+            statFile(filepath, (error, stats) => {
+              if (stats && stats.isDirectory()) {
+                generateDirectoryIndexHTML(tarballDir, filename, (error, html) => {
+                  if (html) {
+                    sendHTML(res, html, OneYear)
+                  } else {
+                    sendServerError(res, `unable to generate index page for ${packageName}@${version}${filename}`)
+                  }
+                })
+              } else {
+                sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
+              }
+            })
+          } else {
+            sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
           }
         })
       } else {
+        // No filename in the URL. Try to serve the package's "main" file.
         readFile(joinPaths(tarballDir, 'package.json'), 'utf8', (error, data) => {
           if (error)
             return sendServerError(res, error)
@@ -136,7 +158,7 @@ export const createRequestHandler = (options = {}) => {
           if (queryMain && !(queryMain in packageConfig))
             return sendNotFoundError(res, `field "${queryMain}" in package.json of ${packageName}@${version}`)
 
-          // Default main is index, same as npm
+          // Default main is index, same as npm.
           const mainProperty = queryMain || 'main'
           const mainFilename = packageConfig[mainProperty] || 'index'
 
