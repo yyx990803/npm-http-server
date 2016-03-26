@@ -17,9 +17,9 @@ const DirectoryListing = (props) => {
     return (
       <tr key={file} className={index % 2 ? 'odd' : 'even'}>
         <td><a title={file} href={href}>{file}</a></td>
-        <td>{new Date(stats.mtime).toISOString()}</td>
-        <td>{byteSize(stats.size)}</td>
         <td>{isDir ? '-' : mime.lookup(file)}</td>
+        <td>{isDir ? '-' : byteSize(stats.size)}</td>
+        <td>{isDir ? '-' : new Date(stats.mtime).toISOString()}</td>
       </tr>
     )
   })
@@ -29,9 +29,9 @@ const DirectoryListing = (props) => {
       <thead>
         <tr>
           <th>Name</th>
-          <th>Last Modified</th>
-          <th>Size</th>
           <th>Type</th>
+          <th>Size</th>
+          <th>Last Modified</th>
         </tr>
       </thead>
       <tbody>
@@ -71,6 +71,13 @@ const getEntries = (dir) =>
     })
   })
 
+const minifyCSS = (css) =>
+  css
+    .replace(/\s+/g, ' ')
+    .replace(/\s*(,|;|:|\{|\})\s*/g, '$1')
+    .replace(/;\}/g, '}')
+    .trim()
+
 const generateIndexPage = (baseDir, dir, displayName, entries) => {
   const dirname = dir.replace(baseDir, '')
 
@@ -78,7 +85,7 @@ const generateIndexPage = (baseDir, dir, displayName, entries) => {
     <html>
       <head>
         <title>Index of {dirname}</title>
-        <style>{`
+        <style>{minifyCSS(`
           body {
             font: 14px Monaco, monospace;
             padding: 0px 10px 5px;
@@ -99,7 +106,7 @@ const generateIndexPage = (baseDir, dir, displayName, entries) => {
           address {
             text-align: right;
           }
-        `}</style>
+        `)}</style>
       </head>
       <body>
         <h1>Index of {dirname}</h1>
