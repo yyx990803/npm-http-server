@@ -71,7 +71,7 @@ const getEntries = (dir) =>
     })
   })
 
-const generateIndexPage = (baseDir, dir, entries) => {
+const generateIndexPage = (baseDir, dir, displayName, entries) => {
   const dirname = dir.replace(baseDir, '')
 
   return DOCTYPE + renderToStaticMarkup(
@@ -81,6 +81,7 @@ const generateIndexPage = (baseDir, dir, entries) => {
         <style>{`
           body {
             font: 14px Monaco, monospace;
+            padding: 0px 10px 5px;
           }
           table {
             width: 100%;
@@ -95,18 +96,23 @@ const generateIndexPage = (baseDir, dir, entries) => {
           th, td {
             padding: 0.1em 0.25em;
           }
+          address {
+            text-align: right;
+          }
         `}</style>
       </head>
       <body>
         <h1>Index of {dirname}</h1>
         <hr/>
         <DirectoryListing entries={entries}/>
+        <hr/>
+        <address>{displayName}</address>
       </body>
     </html>
   )
 }
 
-export const generateDirectoryIndexHTML = (baseDir, dir, callback) =>
+export const generateDirectoryIndexHTML = (baseDir, dir, displayName, callback) =>
   getEntries(path.join(baseDir, dir))
-    .then(entries => generateIndexPage(baseDir, dir, entries))
+    .then(entries => generateIndexPage(baseDir, dir, displayName, entries))
     .then(html => callback(null, html), callback)

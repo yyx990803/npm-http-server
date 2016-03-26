@@ -100,6 +100,7 @@ export const createRequestHandler = (options = {}) => {
       return sendInvalidURLError(res, req.url)
 
     const { packageName, version, filename, search } = url
+    const displayName = `${packageName}@${version}`
     const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
     const serveFile = () => {
@@ -108,7 +109,7 @@ export const createRequestHandler = (options = {}) => {
           if (error) {
             sendServerError(res, error)
           } else if (file == null) {
-            sendNotFoundError(res, `bower.zip in package ${packageName}@${version}`)
+            sendNotFoundError(res, `bower.zip in package ${displayName}`)
           } else {
             sendFile(res, file, OneYear)
           }
@@ -125,19 +126,19 @@ export const createRequestHandler = (options = {}) => {
           } else if (autoIndex) {
             statFile(filepath, (error, stats) => {
               if (stats && stats.isDirectory()) {
-                generateDirectoryIndexHTML(tarballDir, filename, (error, html) => {
+                generateDirectoryIndexHTML(tarballDir, filename, displayName, (error, html) => {
                   if (html) {
                     sendHTML(res, html, OneYear)
                   } else {
-                    sendServerError(res, `unable to generate index page for ${packageName}@${version}${filename}`)
+                    sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
                   }
                 })
               } else {
-                sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
+                sendNotFoundError(res, `file "${filename}" in package ${displayName}`)
               }
             })
           } else {
-            sendNotFoundError(res, `file "${filename}" in package ${packageName}@${version}`)
+            sendNotFoundError(res, `file "${filename}" in package ${displayName}`)
           }
         })
       } else {
