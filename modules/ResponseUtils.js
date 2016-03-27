@@ -1,5 +1,5 @@
-import mime from 'mime'
 import { stat as statFile, createReadStream } from 'fs'
+import mime from 'mime'
 
 export const sendText = (res, statusCode, text) => {
   res.writeHead(statusCode, {
@@ -42,12 +42,10 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
   res.end(html)
 }
 
-const AllUpperCase = /^[A-Z]+$/
+const TextFiles = /\/?(LICENSE|README|CHANGES|AUTHORS|Makefile|\.[a-z]*rc|\.git[a-z]*|\.[a-z]*ignore)$/i
 
-// Most all-uppercase files should be served as text/plain, e.g.
-// README, LICENSE, AUTHORS, etc.
 export const getContentType = (file) =>
-  AllUpperCase.test(file) ? 'text/plain' : mime.lookup(file)
+  TextFiles.test(file) ? 'text/plain' : mime.lookup(file)
 
 export const sendFile = (res, file, maxAge = 0) => {
   statFile(file, (error, stat) => {
