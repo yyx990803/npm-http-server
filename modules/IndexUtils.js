@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
-import mime from 'mime'
 import byteSize from 'byte-size'
-import { renderToStaticMarkup } from 'react-dom/server'
 import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { getContentType } from './ResponseUtils'
 
 const DOCTYPE = '<!DOCTYPE html>'
 
@@ -17,7 +17,7 @@ const DirectoryListing = (props) => {
     return (
       <tr key={file} className={index % 2 ? 'odd' : 'even'}>
         <td><a title={file} href={href}>{file}</a></td>
-        <td>{isDir ? '-' : mime.lookup(file)}</td>
+        <td>{isDir ? '-' : getContentType(file)}</td>
         <td>{isDir ? '-' : byteSize(stats.size)}</td>
         <td>{isDir ? '-' : new Date(stats.mtime).toISOString()}</td>
       </tr>

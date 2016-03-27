@@ -42,13 +42,20 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
   res.end(html)
 }
 
+const AllUpperCase = /^[A-Z]+$/
+
+// Most all-uppercase files should be served as text/plain, e.g.
+// README, LICENSE, AUTHORS, etc.
+export const getContentType = (file) =>
+  AllUpperCase.test(file) ? 'text/plain' : mime.lookup(file)
+
 export const sendFile = (res, file, maxAge = 0) => {
   statFile(file, (error, stat) => {
     if (error) {
       sendServerError(res, error)
     } else {
       res.writeHead(200, {
-        'Content-Type': `${mime.lookup(file)}; charset=utf-8`,
+        'Content-Type': `${getContentType(file)}; charset=utf-8`,
         'Content-Length': stat.size,
         'Cache-Control': `public, max-age=${maxAge}`
       })
