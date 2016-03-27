@@ -1,5 +1,6 @@
-import createLRUCache from 'lru-cache'
+import 'isomorphic-fetch'
 import { createFetch, accept, parseJSON } from 'http-client'
+import createLRUCache from 'lru-cache'
 
 const fetch = createFetch(
   accept('application/json'),
