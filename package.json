@@ -4,10 +4,6 @@
   "description": "Serve files from npm packages over HTTP",
   "author": "Michael Jackson",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mjackson/npm-http-server.git"
-  },
   "main": "lib",
   "files": [
     "lib"
@@ -45,6 +41,10 @@
     "eslint-plugin-react": "^4.2.1",
     "readline-sync": "^1.4.1",
     "rimraf": "^2.5.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mjackson/npm-http-server.git"
   },
   "babel": {
     "presets": [
