@@ -126,13 +126,18 @@ export const createRequestHandler = (options = {}) => {
           } else if (autoIndex) {
             statFile(filepath, (error, stats) => {
               if (stats && stats.isDirectory()) {
-                generateDirectoryIndexHTML(tarballDir, filename, displayName, (error, html) => {
-                  if (html) {
-                    sendHTML(res, html, OneYear)
-                  } else {
-                    sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
-                  }
-                })
+                // Append `/` to directory urls
+                if(req.url[req.url.length - 1] !== '/') {
+                  sendRedirect(res, req.url + '/', redirectTTL)
+                } else {
+                  generateDirectoryIndexHTML(tarballDir, filename, displayName, (error, html) => {
+                    if (html) {
+                      sendHTML(res, html, OneYear)
+                    } else {
+                      sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
+                    }
+                  })
+                }
               } else {
                 sendNotFoundError(res, `file "${filename}" in package ${displayName}`)
               }
