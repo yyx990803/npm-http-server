@@ -1,8 +1,8 @@
-import csso from 'csso'
 import React from 'react'
+import { minifyCSS } from '../StyleUtils'
 import DirectoryListing from './DirectoryListing'
 
-const IndexStyles = csso.minify(`
+const IndexStyles = minifyCSS(`
 body {
   font: 14px Monaco, monospace;
   padding: 0px 10px 5px;
@@ -23,7 +23,7 @@ th, td {
 address {
   text-align: right;
 }
-`).css
+`)
 
 const IndexPage = (props) => {
   const { baseDir, dir, displayName, entries } = props
