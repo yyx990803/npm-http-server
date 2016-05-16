@@ -10,9 +10,20 @@ const URLFormat = /^\/((?:@[^\/@]+\/)?[^\/@]+)(?:@([^\/]+))?(\/.*)?$/
 const decodeParam = (param) =>
   param && decodeURIComponent(param)
 
-export const parsePackageURL = (pathname) => {
-  const url = parseURL(pathname)
-  const match = URLFormat.exec(url.pathname)
+const ValidQueryKeys = {
+  main: true
+}
+
+const queryIsValid = (query) =>
+  Object.keys(query).every(key => ValidQueryKeys[key])
+
+export const parsePackageURL = (url) => {
+  const { pathname, search, query } = parseURL(url, true)
+
+  if (!queryIsValid(query))
+    return null
+
+  const match = URLFormat.exec(pathname)
 
   if (match == null)
     return null
@@ -20,13 +31,13 @@ export const parsePackageURL = (pathname) => {
   const packageName = match[1]
   const version = decodeParam(match[2]) || 'latest'
   const filename = decodeParam(match[3])
-  const { search } = parseURL(pathname)
 
-  return {           // If the URL is /@scope/name@version/path.js?bundle:
-    packageName,     // @scope/name
-    version,         // version
-    filename,        // /path.js
-    search           // ?bundle
+  return {        // If the URL is /@scope/name@version/path.js?bundle:
+    packageName,  // @scope/name
+    version,      // version
+    filename,     // /path.js
+    search,       // ?main=browser
+    query         // { main: 'browser' }
   }
 }
 
