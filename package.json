@@ -1,6 +1,6 @@
 {
   "name": "npm-http-server",
-  "version": "2.9.1",
+  "version": "2.10.0",
   "description": "Serve files from npm packages over HTTP",
   "author": "Michael Jackson",
   "license": "MIT",
