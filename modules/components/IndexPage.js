@@ -1,49 +1,33 @@
 import React from 'react'
-import { minifyCSS } from '../StyleUtils'
+import { readCSS } from '../StyleUtils'
 import DirectoryListing from './DirectoryListing'
 
-const IndexStyles = minifyCSS(`
-body {
-  font: 14px Monaco, monospace;
-  padding: 0px 10px 5px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-tr.even {
-  background-color: #eee;
-}
-th {
-  text-align: left;
-}
-th, td {
-  padding: 0.1em 0.25em;
-}
-address {
-  text-align: right;
-}
-`)
+const IndexPage = React.createClass({
+  statics: {
+    css: readCSS(__dirname, 'IndexPage.css')
+  },
 
-const IndexPage = (props) => {
-  const { baseDir, dir, displayName, entries } = props
-  const dirname = dir.replace(baseDir, '')
+  render() {
+    const { baseDir, dir, displayName, entries } = this.props
+    const dirname = dir.replace(baseDir, '')
 
-  return (
-    <html>
-      <head>
-        <title>Index of {dirname}</title>
-        <style>{IndexStyles}</style>
-      </head>
-      <body>
-        <h1>Index of {dirname}</h1>
-        <hr/>
-        <DirectoryListing dirname={dirname} entries={entries}/>
-        <hr/>
-        <address>{displayName}</address>
-      </body>
-    </html>
-  )
-}
+    return (
+      <html>
+        <head>
+          <meta charSet="utf-8"/>
+          <title>Index of {dirname}</title>
+          <style>{IndexPage.css}</style>
+        </head>
+        <body>
+          <h1>Index of {dirname}</h1>
+          <hr/>
+          <DirectoryListing dirname={dirname} entries={entries}/>
+          <hr/>
+          <address>{displayName}</address>
+        </body>
+      </html>
+    )
+  }
+})
 
 export default IndexPage

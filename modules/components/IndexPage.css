@@ -1,0 +1,23 @@
+body {
+  font: 16px Helvetica, sans-serif;
+  padding: 0px 10px 5px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 0.85em Monaco, monospace;
+}
+tr.even {
+  background-color: #eee;
+}
+th {
+  text-align: left;
+}
+th, td {
+  padding: 0.1em 0.25em;
+}
+
+address {
+  text-align: right;
+}
