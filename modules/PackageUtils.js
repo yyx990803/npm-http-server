@@ -81,6 +81,8 @@ export const getPackage = (tarballURL, outputDir, callback) => {
           .pipe(gunzip())
           .pipe(
             tar.extract(outputDir, {
+              dmode: 0o666, // All dirs should be writable
+              fmode: 0o444, // All files should be readable
               map: normalizeTarHeader
             })
           )
