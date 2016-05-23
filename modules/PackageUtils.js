@@ -61,15 +61,11 @@ const normalizeTarHeader = (header) => {
   // so we shorten that to just "index.js" here. A few packages use a
   // prefix other than "package/". e.g. the firebase package uses the
   // "firebase_npm/" prefix. So we just strip the first dir name.
-  const prevName = header.name
   header.name = header.name.replace(/^[^\/]+\//, '')
-  console.log(prevName, '=>', header.name)
   return header
 }
 
 export const getPackage = (tarballURL, outputDir, callback) => {
-  console.log(tarballURL)
-  console.log(outputDir)
   mkdirp(outputDir, (error) => {
     if (error) {
       callback(error)
