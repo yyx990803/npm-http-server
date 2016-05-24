@@ -13,7 +13,7 @@ const getStats = (file) =>
     })
   })
 
-const getType = stats => {
+const getType = (stats) => {
   if (stats.isFile()) return 'file'
   if (stats.isDirectory()) return 'directory'
   if (stats.isBlockDevice()) return 'blockDevice'
@@ -24,6 +24,9 @@ const getType = stats => {
   return 'unknown'
 }
 
+const formatTime = (time) =>
+  new Date(time).toISOString()
+
 const resolveDirectory = (baseDir, path, stats, maximumDepth) => {
   const files = maximumDepth > 0
     ? getEntries(baseDir, path, maximumDepth - 1)
@@ -33,8 +36,8 @@ const resolveDirectory = (baseDir, path, stats, maximumDepth) => {
     .then(
       files => ({
         path,
-        lastModified: new Date(stats.mtime).toISOString(),
-        mime: getContentType(path),
+        lastModified: formatTime(stats.mtime),
+        contentType: getContentType(path),
         size: stats.size,
         type: getType(stats),
         files
@@ -46,16 +49,17 @@ const resolveEntry = (baseDir, path, stats, maximumDepth) =>
   stats.isDirectory()
     ? resolveDirectory(baseDir, path, stats, maximumDepth)
     : Promise.resolve({
-      path,
-      lastModified: new Date(stats.mtime).toISOString(),
-      mime: getContentType(path),
-      size: stats.size,
-      contentType: getType(stats),
-    })
+        path,
+        lastModified: formatTime(stats.mtime),
+        contentType: getContentType(path),
+        size: stats.size,
+        type: getType(stats)
+      })
 
 const getEntries = (baseDir, name, maximumDepth) =>
   new Promise((resolve, reject) => {
     const dir = path.join(baseDir, name)
+
     fs.readdir(dir, (error, files) => {
       if (error) {
         reject(error)
@@ -72,7 +76,6 @@ const getEntries = (baseDir, name, maximumDepth) =>
       }
     })
   })
-
 
 export const generateDirectoryTree = (baseDir, dir, maximumDepth, callback) =>
   getEntries(baseDir, dir, maximumDepth)
