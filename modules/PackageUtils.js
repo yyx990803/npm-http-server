@@ -11,7 +11,8 @@ const decodeParam = (param) =>
   param && decodeURIComponent(param)
 
 const ValidQueryKeys = {
-  main: true
+  main: true,
+  json: true
 }
 
 const queryIsValid = (query) =>
@@ -34,6 +35,7 @@ export const parsePackageURL = (url) => {
 
   return {        // If the URL is /@scope/name@version/path.js?bundle:
     packageName,  // @scope/name
+    pathname,     // /@scope/name@version/path.js
     version,      // version
     filename,     // /path.js
     search,       // ?main=browser

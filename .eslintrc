@@ -11,6 +11,7 @@
     "no-confusing-arrow": 0,
     "no-param-reassign": [2, { "props": false }],
     "no-shadow": 1,
+    "no-use-before-define": 1,
     "prefer-template": 0,
     "react/prefer-es6-class": 0,
     "react/prop-types": 0,

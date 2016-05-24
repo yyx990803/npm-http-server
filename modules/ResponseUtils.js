@@ -10,6 +10,18 @@ export const sendText = (res, statusCode, text) => {
   res.end(text)
 }
 
+export const sendJSON = (res, json, maxAge = 0, statusCode = 200) => {
+  const text = JSON.stringify(json)
+
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    'Content-Length': text.length,
+    'Cache-Control': `public, max-age=${maxAge}`
+  })
+
+  res.end(text)
+}
+
 export const sendInvalidURLError = (res, url) =>
   sendText(res, 403, `Invalid URL: ${url}`)
 
