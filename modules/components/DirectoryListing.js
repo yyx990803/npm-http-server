@@ -1,9 +1,12 @@
 import React from 'react'
 import byteSize from 'byte-size'
-import { getContentType } from '../ResponseUtils'
+import { getContentType } from '../FileUtils'
+
+const formatTime = (time) =>
+  new Date(time).toISOString()
 
 const DirectoryListing = (props) => {
-  const { dirname, entries } = props
+  const { dir, entries } = props
 
   const rows = entries.map(({ file, stats }, index) => {
     const isDir = stats.isDirectory()
@@ -14,12 +17,12 @@ const DirectoryListing = (props) => {
         <td><a title={file} href={href}>{file}</a></td>
         <td>{isDir ? '-' : getContentType(file)}</td>
         <td>{isDir ? '-' : byteSize(stats.size)}</td>
-        <td>{isDir ? '-' : new Date(stats.mtime).toISOString()}</td>
+        <td>{isDir ? '-' : formatTime(stats.mtime)}</td>
       </tr>
     )
   })
 
-  if (dirname !== '/')
+  if (dir !== '/')
     rows.unshift(
       <tr key=".." className="odd">
         <td><a title="Parent directory" href="../">..</a></td>

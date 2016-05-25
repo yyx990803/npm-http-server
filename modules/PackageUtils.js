@@ -33,13 +33,13 @@ export const parsePackageURL = (url) => {
   const version = decodeParam(match[2]) || 'latest'
   const filename = decodeParam(match[3])
 
-  return {        // If the URL is /@scope/name@version/path.js?bundle:
-    packageName,  // @scope/name
+  return {        // If the URL is /@scope/name@version/path.js?main=browser:
     pathname,     // /@scope/name@version/path.js
-    version,      // version
-    filename,     // /path.js
     search,       // ?main=browser
-    query         // { main: 'browser' }
+    query,        // { main: 'browser' }
+    packageName,  // @scope/name
+    version,      // version
+    filename      // /path.js
   }
 }
 

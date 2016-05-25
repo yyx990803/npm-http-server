@@ -1,5 +1,5 @@
 import { stat as statFile, createReadStream } from 'fs'
-import mime from 'mime'
+import { getContentType } from './FileUtils'
 
 export const sendText = (res, statusCode, text) => {
   res.writeHead(statusCode, {
@@ -54,19 +54,15 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
   res.end(html)
 }
 
-const TextFiles = /\/?(LICENSE|README|CHANGES|AUTHORS|Makefile|\.[a-z]*rc|\.git[a-z]*|\.[a-z]*ignore)$/i
-
-export const getContentType = (file) =>
-  TextFiles.test(file) ? 'text/plain' : mime.lookup(file)
-
+// TODO: Require callers to pass in stats here.
 export const sendFile = (res, file, maxAge = 0) => {
-  statFile(file, (error, stat) => {
+  statFile(file, (error, stats) => {
     if (error) {
       sendServerError(res, error)
     } else {
       res.writeHead(200, {
         'Content-Type': `${getContentType(file)}; charset=utf-8`,
-        'Content-Length': stat.size,
+        'Content-Length': stats.size,
         'Cache-Control': `public, max-age=${maxAge}`
       })
 

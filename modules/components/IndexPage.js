@@ -8,20 +8,19 @@ const IndexPage = React.createClass({
   },
 
   render() {
-    const { baseDir, dir, displayName, entries } = this.props
-    const dirname = dir.replace(baseDir, '')
+    const { dir, displayName, entries } = this.props
 
     return (
       <html>
         <head>
           <meta charSet="utf-8"/>
-          <title>Index of {dirname}</title>
+          <title>Index of {dir}</title>
           <style>{IndexPage.css}</style>
         </head>
         <body>
-          <h1>Index of {dirname}</h1>
+          <h1>Index of {dir}</h1>
           <hr/>
-          <DirectoryListing dirname={dirname} entries={entries}/>
+          <DirectoryListing dir={dir} entries={entries}/>
           <hr/>
           <address>{displayName}</address>
         </body>

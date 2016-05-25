@@ -1,6 +1,6 @@
 import fs from 'fs'
-import path from 'path'
 import React from 'react'
+import { join as joinPaths } from 'path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import IndexPage from './components/IndexPage'
 
@@ -23,7 +23,7 @@ const getEntries = (dir) =>
       } else {
         resolve(
           Promise.all(
-            files.map(file => getStats(path.join(dir, file)))
+            files.map(file => getStats(joinPaths(dir, file)))
           ).then(
             statsArray => statsArray.map(
               (stats, index) => ({ file: files[index], stats })
@@ -36,12 +36,10 @@ const getEntries = (dir) =>
 
 const DOCTYPE = '<!DOCTYPE html>'
 
-const generateIndexPage = (baseDir, dir, displayName, entries) =>
-  DOCTYPE + renderToStaticMarkup(
-    <IndexPage baseDir={baseDir} dir={dir} displayName={displayName} entries={entries}/>
-  )
+const generateIndexPage = (props) =>
+  DOCTYPE + renderToStaticMarkup(<IndexPage {...props}/>)
 
 export const generateDirectoryIndexHTML = (baseDir, dir, displayName, callback) =>
-  getEntries(path.join(baseDir, dir))
-    .then(entries => generateIndexPage(baseDir, dir, displayName, entries))
+  getEntries(joinPaths(baseDir, dir))
+    .then(entries => generateIndexPage({ dir, displayName, entries }))
     .then(html => callback(null, html), callback)

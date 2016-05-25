@@ -1,14 +1,15 @@
 import http from 'http'
-import tmpdir from 'os-tmpdir'
 import { parse as parseURL } from 'url'
 import { join as joinPaths } from 'path'
 import { stat as statFile, readFile } from 'fs'
 import { maxSatisfying as maxSatisfyingVersion } from 'semver'
 import { parsePackageURL, createPackageURL, getPackage } from './PackageUtils'
 import { generateDirectoryIndexHTML } from './IndexUtils'
-import { generateDirectoryTree } from './TreeUtils'
+import { generateMetadata } from './MetadataUtils'
 import { getPackageInfo } from './RegistryUtils'
 import { createBowerPackage } from './BowerUtils'
+import { createTempPath } from './PathUtils'
+import { getFileType } from './FileUtils'
 import {
   sendNotFoundError,
   sendInvalidURLError,
@@ -19,8 +20,6 @@ import {
   sendJSON,
   sendHTML
 } from './ResponseUtils'
-
-const TmpDir = tmpdir()
 
 const OneMinute = 60
 const OneDay = OneMinute * 60 * 24
@@ -38,28 +37,30 @@ const ResolveExtensions = [ '', '.js', '.json' ]
  * "lib/file.json" depending on which one is available, similar
  * to how require('lib/file') does.
  */
-const resolveFile = (file, useIndex, callback) => {
+const resolveFile = (path, useIndex, callback) => {
   ResolveExtensions.reduceRight((next, ext) => {
-    const filename = file + ext
+    const file = path + ext
 
     return () => {
-      statFile(filename, (error, stats) => {
-        if (stats && stats.isFile()) {
-          callback(null, filename)
-        } else if (useIndex && stats && stats.isDirectory()) {
-          resolveFile(joinPaths(filename, 'index'), false, (error, indexFile) => {
+      statFile(file, (error, stats) => {
+        if (error) {
+          if (error.code === 'ENOENT') {
+            next()
+          } else {
+            callback(error)
+          }
+        } else if (useIndex && stats.isDirectory()) {
+          resolveFile(joinPaths(file, 'index'), false, (error, indexFile, indexStats) => {
             if (error) {
               callback(error)
             } else if (indexFile) {
-              callback(null, indexFile)
+              callback(null, indexFile, indexStats)
             } else {
               next()
             }
           })
-        } else if (error && error.code !== 'ENOENT') {
-          callback(error)
         } else {
-          next()
+          callback(null, file, stats)
         }
       })
     }
@@ -102,66 +103,96 @@ export const createRequestHandler = (options = {}) => {
     if (url == null)
       return sendInvalidURLError(res, req.url)
 
-    const { packageName, version, filename, search } = url
+    const { pathname, search, query, packageName, version, filename } = url
     const displayName = `${packageName}@${version}`
-    const tarballDir = joinPaths(TmpDir, packageName + '-' + version)
 
-    const serveFile = () => {
+    // Step 1: Fetch the package from the registry and store a local copy.
+    // Redirect if the URL does not specify a version number.
+    const fetchPackage = (next) => {
+      const tarballDir = createTempPath(displayName)
+
+      checkLocalCache(tarballDir, (isCached) => {
+        if (isCached)
+          return next(tarballDir) // Best case: we already have this package on disk.
+
+        // Fetch package info from NPM registry.
+        getPackageInfo(registryURL, packageName, (error, response) => {
+          if (error)
+            return sendServerError(res, error)
+
+          if (response.status === 404)
+            return sendNotFoundError(res, `package "${packageName}"`)
+
+          const info = response.jsonData
+
+          if (info == null || info.versions == null)
+            return sendServerError(res, new Error(`Unable to retrieve info for package ${packageName}`))
+
+          const { versions, 'dist-tags': tags } = info
+
+          if (version in versions) {
+            // A valid request for a package we haven't downloaded yet.
+            const packageConfig = versions[version]
+
+            // TODO: Do we need the parse here?
+            const tarballURL = parseURL(packageConfig.dist.tarball)
+
+            getPackage(tarballURL, tarballDir, (error) => {
+              if (error) {
+                sendServerError(res, error)
+              } else {
+                next(tarballDir)
+              }
+            })
+          } else if (version in tags) {
+            sendRedirect(res, createPackageURL(packageName, tags[version], filename, search), redirectTTL)
+          } else {
+            const maxVersion = maxSatisfyingVersion(Object.keys(versions), version)
+
+            if (maxVersion) {
+              sendRedirect(res, createPackageURL(packageName, maxVersion, filename, search), redirectTTL)
+            } else {
+              sendNotFoundError(res, `package ${displayName}`)
+            }
+          }
+        })
+      })
+    }
+
+    // Step 2: Determine which file we're going to serve and get its stats.
+    // Redirect if the request targets a directory with no trailing slash.
+    const findFile = (packageDir, next) => {
       if (filename === bowerBundle) {
-        createBowerPackage(tarballDir, (error, file) => {
+        createBowerPackage(packageDir, (error, file) => {
           if (error) {
             sendServerError(res, error)
           } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${displayName}`)
           } else {
+            // TODO: Use the same code path for /bower.zip as
+            // everything else, i.e. next(file, stats)
             sendFile(res, file, OneYear)
           }
         })
       } else if (filename) {
-        const filepath = joinPaths(tarballDir, filename)
+        const path = joinPaths(packageDir, filename)
 
-        // Try to serve the file in the URL, or at least a directory index page.
-        resolveFile(filepath, false, (error, file) => {
+        // Based on the URL, figure out which file they want.
+        resolveFile(path, false, (error, file, stats) => {
           if (error) {
             sendServerError(res, error)
-          } else if (file) {
-            sendFile(res, file, OneYear)
-          } else if (autoIndex) {
-            statFile(filepath, (error, stats) => {
-              if (stats && stats.isDirectory()) {
-                // Append `/` to directory URLs
-                if (url.pathname[url.pathname.length - 1] !== '/') {
-                  sendRedirect(res, url.pathname + '/' + url.search, redirectTTL)
-                } else {
-                  if (url.query.hasOwnProperty('json')) {
-                    generateDirectoryTree(tarballDir, filename, maximumDepth, (error, json) => {
-                      if (json) {
-                        sendJSON(res, json, OneYear)
-                      } else {
-                        sendServerError(res, `unable to generate index json for ${displayName}${filename}`)
-                      }
-                    })
-                  } else {
-                    generateDirectoryIndexHTML(tarballDir, filename, displayName, (error, html) => {
-                      if (html) {
-                        sendHTML(res, html, OneYear)
-                      } else {
-                        sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
-                      }
-                    })
-                  }
-                }
-              } else {
-                sendNotFoundError(res, `file "${filename}" in package ${displayName}`)
-              }
-            })
-          } else {
+          } else if (file == null) {
             sendNotFoundError(res, `file "${filename}" in package ${displayName}`)
+          } else if (stats.isDirectory() && pathname[pathname.length - 1] !== '/') {
+            // Append `/` to directory URLs
+            sendRedirect(res, pathname + '/' + search, OneYear)
+          } else {
+            next(file.replace(packageDir, ''), stats)
           }
         })
       } else {
         // No filename in the URL. Try to serve the package's "main" file.
-        readFile(joinPaths(tarballDir, 'package.json'), 'utf8', (error, data) => {
+        readFile(joinPaths(packageDir, 'package.json'), 'utf8', (error, data) => {
           if (error)
             return sendServerError(res, error)
 
@@ -169,73 +200,60 @@ export const createRequestHandler = (options = {}) => {
           try {
             packageConfig = JSON.parse(data)
           } catch (error) {
-            return sendText(res, 500, `Error parsing package.json: ${error.message}`)
+            return sendText(res, 500, `error parsing ${displayName}/package.json: ${error.message}`)
           }
 
-          const queryMain = req.query && req.query.main
+          const queryMain = query && query.main
 
           if (queryMain && !(queryMain in packageConfig))
-            return sendNotFoundError(res, `field "${queryMain}" in package.json of ${packageName}@${version}`)
+            return sendNotFoundError(res, `field "${queryMain}" in ${displayName}/package.json`)
 
           // Default main is index, same as npm.
           const mainProperty = queryMain || 'main'
           const mainFilename = packageConfig[mainProperty] || 'index'
 
-          resolveFile(joinPaths(tarballDir, mainFilename), true, (error, file) => {
+          resolveFile(joinPaths(packageDir, mainFilename), true, (error, file, stats) => {
             if (error) {
               sendServerError(res, error)
             } else if (file == null) {
-              sendNotFoundError(res, `main file "${mainFilename}" in package ${packageName}@${version}`)
+              sendNotFoundError(res, `main file "${mainFilename}" in package ${displayName}`)
             } else {
-              sendFile(res, file, OneYear)
+              next(file.replace(packageDir, ''), stats)
             }
           })
         })
       }
     }
 
-    checkLocalCache(tarballDir, (isCached) => {
-      if (isCached)
-        return serveFile() // Best case: we already have this package on disk.
-
-      // Fetch package info from NPM registry.
-      getPackageInfo(registryURL, packageName, (error, response) => {
-        if (error)
-          return sendServerError(res, error)
-
-        if (response.status === 404)
-          return sendNotFoundError(res, `package "${packageName}"`)
-
-        const info = response.jsonData
-
-        if (info == null || info.versions == null)
-          return sendServerError(res, new Error(`Unable to retrieve info for package ${packageName}`))
-
-        const { versions, 'dist-tags': tags } = info
-
-        if (version in versions) {
-          // A valid request for a package we haven't downloaded yet.
-          const packageConfig = versions[version]
-          const tarballURL = parseURL(packageConfig.dist.tarball)
-
-          getPackage(tarballURL, tarballDir, (error) => {
-            if (error) {
-              sendServerError(res, error)
-            } else {
-              serveFile()
-            }
-          })
-        } else if (version in tags) {
-          sendRedirect(res, createPackageURL(packageName, tags[version], filename, search), redirectTTL)
-        } else {
-          const maxVersion = maxSatisfyingVersion(Object.keys(versions), version)
-
-          if (maxVersion) {
-            sendRedirect(res, createPackageURL(packageName, maxVersion, filename, search), redirectTTL)
+    // Step 3: Send the file, JSON metadata, or HTML directory listing.
+    const serveFile = (baseDir, path, stats) => {
+      if (query.json != null) {
+        generateMetadata(baseDir, path, stats, maximumDepth, (error, metadata) => {
+          if (metadata) {
+            sendJSON(res, metadata, OneYear)
           } else {
-            sendNotFoundError(res, `package ${packageName}@${version}`)
+            sendServerError(res, `unable to generate JSON metadata for ${displayName}${filename}`)
           }
-        }
+        })
+      } else if (stats.isFile()) {
+        // TODO: Pass stats through here so we don't need a 2nd stat.
+        sendFile(res, joinPaths(baseDir, path), OneYear)
+      } else if (autoIndex && stats.isDirectory()) {
+        generateDirectoryIndexHTML(baseDir, path, displayName, (error, html) => {
+          if (html) {
+            sendHTML(res, html, OneYear)
+          } else {
+            sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
+          }
+        })
+      } else {
+        sendInvalidURLError(res, `${displayName}${filename} is a ${getFileType(stats)}`)
+      }
+    }
+
+    fetchPackage(tarballDir => {
+      findFile(tarballDir, (file, stats) => {
+        serveFile(tarballDir, file, stats)
       })
     })
   }
