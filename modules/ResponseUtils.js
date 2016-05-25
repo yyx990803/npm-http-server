@@ -1,5 +1,5 @@
-import { stat as statFile, createReadStream } from 'fs'
-import { getContentType } from './FileUtils'
+import fs from 'fs'
+import { getContentType, getStats } from './FileUtils'
 
 export const sendText = (res, statusCode, text) => {
   res.writeHead(statusCode, {
@@ -54,25 +54,23 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
   res.end(html)
 }
 
-// TODO: Require callers to pass in stats here.
-export const sendFile = (res, file, maxAge = 0) => {
-  statFile(file, (error, stats) => {
-    if (error) {
-      sendServerError(res, error)
-    } else {
+export const sendFile = (res, file, stats, maxAge = 0) =>
+  Promise.resolve(stats || getStats(file))
+    .then(stats => {
       res.writeHead(200, {
         'Content-Type': `${getContentType(file)}; charset=utf-8`,
         'Content-Length': stats.size,
         'Cache-Control': `public, max-age=${maxAge}`
       })
 
-      const stream = createReadStream(file)
+      const stream = fs.createReadStream(file)
 
       stream.on('error', (error) => {
         sendServerError(res, error)
       })
 
       stream.pipe(res)
-    }
-  })
-}
+    })
+    .catch(error => {
+      sendServerError(res, error)
+    })

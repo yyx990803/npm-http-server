@@ -1,17 +1,6 @@
 import fs from 'fs'
 import { join as joinPaths } from 'path'
-import { getContentType, getFileType } from './FileUtils'
-
-const getStats = (file) =>
-  new Promise((resolve, reject) => {
-    fs.lstat(file, (error, stats) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(stats)
-      }
-    })
-  })
+import { getContentType, getStats, getFileType } from './FileUtils'
 
 const getEntries = (baseDir, path, maximumDepth) =>
   new Promise((resolve, reject) => {

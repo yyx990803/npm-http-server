@@ -3,17 +3,7 @@ import React from 'react'
 import { join as joinPaths } from 'path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import IndexPage from './components/IndexPage'
-
-const getStats = (file) =>
-  new Promise((resolve, reject) => {
-    fs.stat(file, (error, stats) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(stats)
-      }
-    })
-  })
+import { getStats } from './FileUtils'
 
 const getEntries = (dir) =>
   new Promise((resolve, reject) => {

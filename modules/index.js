@@ -1,5 +1,4 @@
 import http from 'http'
-import { parse as parseURL } from 'url'
 import { join as joinPaths } from 'path'
 import { stat as statFile, readFile } from 'fs'
 import { maxSatisfying as maxSatisfyingVersion } from 'semver'
@@ -133,9 +132,7 @@ export const createRequestHandler = (options = {}) => {
           if (version in versions) {
             // A valid request for a package we haven't downloaded yet.
             const packageConfig = versions[version]
-
-            // TODO: Do we need the parse here?
-            const tarballURL = parseURL(packageConfig.dist.tarball)
+            const tarballURL = packageConfig.dist.tarball
 
             getPackage(tarballURL, tarballDir, (error) => {
               if (error) {
@@ -169,9 +166,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${displayName}`)
           } else {
-            // TODO: Use the same code path for /bower.zip as
-            // everything else, i.e. next(file, stats)
-            sendFile(res, file, OneYear)
+            next(file, null)
           }
         })
       } else if (filename) {
@@ -235,9 +230,9 @@ export const createRequestHandler = (options = {}) => {
             sendServerError(res, `unable to generate JSON metadata for ${displayName}${filename}`)
           }
         })
-      } else if (stats.isFile()) {
-        // TODO: Pass stats through here so we don't need a 2nd stat.
-        sendFile(res, joinPaths(baseDir, path), OneYear)
+      // TODO: Remove "stats == null" check when we remove Bower support.
+      } else if (stats == null || stats.isFile()) {
+        sendFile(res, joinPaths(baseDir, path), stats, OneYear)
       } else if (autoIndex && stats.isDirectory()) {
         generateDirectoryIndexHTML(baseDir, path, displayName, (error, html) => {
           if (html) {
