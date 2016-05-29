@@ -106,13 +106,13 @@ export const createRequestHandler = (options = {}) => {
     const displayName = `${packageName}@${version}`
 
     // Step 1: Fetch the package from the registry and store a local copy.
-    // Redirect if the URL does not specify a version number.
+    // Redirect if the URL does not specify an exact version number.
     const fetchPackage = (next) => {
-      const tarballDir = createTempPath(displayName)
+      const packageDir = createTempPath(displayName)
 
-      checkLocalCache(tarballDir, (isCached) => {
+      checkLocalCache(packageDir, (isCached) => {
         if (isCached)
-          return next(tarballDir) // Best case: we already have this package on disk.
+          return next(packageDir) // Best case: we already have this package on disk.
 
         // Fetch package info from NPM registry.
         getPackageInfo(registryURL, packageName, (error, response) => {
@@ -134,11 +134,11 @@ export const createRequestHandler = (options = {}) => {
             const packageConfig = versions[version]
             const tarballURL = packageConfig.dist.tarball
 
-            getPackage(tarballURL, tarballDir, (error) => {
+            getPackage(tarballURL, packageDir, (error) => {
               if (error) {
                 sendServerError(res, error)
               } else {
-                next(tarballDir)
+                next(packageDir)
               }
             })
           } else if (version in tags) {
@@ -246,9 +246,9 @@ export const createRequestHandler = (options = {}) => {
       }
     }
 
-    fetchPackage(tarballDir => {
-      findFile(tarballDir, (file, stats) => {
-        serveFile(tarballDir, file, stats)
+    fetchPackage(packageDir => {
+      findFile(packageDir, (file, stats) => {
+        serveFile(packageDir, file, stats)
       })
     })
   }
