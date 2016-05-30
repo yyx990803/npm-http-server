@@ -2,8 +2,8 @@ import { join as joinPaths } from 'path'
 import { stat as statFile, readFile, createWriteStream } from 'fs'
 import archiver from 'archiver'
 
-const generateZip = (tarballDir, packageVersion, callback) => {
-  readFile(joinPaths(tarballDir, 'bower.json'), 'utf8', (error, bowerJSON) => {
+const generateZip = (packageDir, packageVersion, callback) => {
+  readFile(joinPaths(packageDir, 'bower.json'), 'utf8', (error, bowerJSON) => {
     if (error) {
       callback(error)
       return
@@ -12,7 +12,7 @@ const generateZip = (tarballDir, packageVersion, callback) => {
     const bowerConfig = Object.assign(JSON.parse(bowerJSON), { version: packageVersion })
     const main = bowerConfig.main
     const files = Array.isArray(main) ? main : [ main ]
-    const bowerZip = joinPaths(tarballDir, 'bower.zip')
+    const bowerZip = joinPaths(packageDir, 'bower.zip')
     const out = createWriteStream(bowerZip)
 
     const zip = archiver('zip', {})
@@ -45,21 +45,21 @@ const generateZip = (tarballDir, packageVersion, callback) => {
 
     // add all files from `main` section of Bower config
     files.forEach(file => {
-      zip.file(joinPaths(tarballDir, file), { name: file })
+      zip.file(joinPaths(packageDir, file), { name: file })
     })
 
     zip.finalize()
   })
 }
 
-export const createBowerPackage = (tarballDir, callback) => {
-  statFile(joinPaths(tarballDir, 'bower.json'), (error, stat) => {
+export const createBowerPackage = (packageDir, callback) => {
+  statFile(joinPaths(packageDir, 'bower.json'), (error, stat) => {
     if (error || !stat.isFile()) {
       callback(new Error('Missing bower.json'))
       return
     }
 
-    readFile(joinPaths(tarballDir, 'package.json'), 'utf8', (error, packageJSON) => {
+    readFile(joinPaths(packageDir, 'package.json'), 'utf8', (error, packageJSON) => {
       if (error) {
         callback(error)
         return
@@ -67,7 +67,7 @@ export const createBowerPackage = (tarballDir, callback) => {
 
       const packageVersion = JSON.parse(packageJSON).version
 
-      generateZip(tarballDir, packageVersion, callback)
+      generateZip(packageDir, packageVersion, callback)
     })
   })
 }
