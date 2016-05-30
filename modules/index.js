@@ -166,7 +166,7 @@ export const createRequestHandler = (options = {}) => {
           } else if (file == null) {
             sendNotFoundError(res, `bower.zip in package ${displayName}`)
           } else {
-            next(file, null)
+            next('bower.zip', null)
           }
         })
       } else if (filename) {
