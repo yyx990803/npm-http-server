@@ -2,10 +2,14 @@ import React from 'react'
 import { readCSS } from '../StyleUtils'
 import DirectoryListing from './DirectoryListing'
 
-const IndexPage = React.createClass({
-  statics: {
-    css: readCSS(__dirname, 'IndexPage.css')
-  },
+const IndexPageCSS = readCSS(__dirname, 'IndexPage.css')
+
+class IndexPage extends React.Component {
+  static propTypes = {
+    dir: React.PropTypes.string.isRequired,
+    displayName: React.PropTypes.string.isRequired,
+    entries: React.PropTypes.array.isRequired
+  }
 
   render() {
     const { dir, displayName, entries } = this.props
@@ -15,7 +19,7 @@ const IndexPage = React.createClass({
         <head>
           <meta charSet="utf-8"/>
           <title>Index of {dir}</title>
-          <style>{IndexPage.css}</style>
+          <style>{IndexPageCSS}</style>
         </head>
         <body>
           <h1>Index of {dir}</h1>
@@ -27,6 +31,6 @@ const IndexPage = React.createClass({
       </html>
     )
   }
-})
+}
 
 export default IndexPage
