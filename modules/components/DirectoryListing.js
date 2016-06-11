@@ -53,7 +53,6 @@ class DirectoryListing extends React.Component {
         </tbody>
       </table>
     )
-    
   }
 }
 
