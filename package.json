@@ -11,9 +11,10 @@
   "scripts": {
     "test": "npm run lint",
     "lint": "eslint modules",
-    "build": "rimraf lib && babel ./modules -d lib --copy-files",
+    "build": "node ./scripts/build.js",
+    "build-lib": "rimraf lib && babel ./modules -d lib --copy-files",
     "release": "node ./scripts/release.js",
-    "prepublish": "npm run build"
+    "prepublish": "node ./scripts/build.js"
   },
   "dependencies": {
     "archiver": "^1.0.0",
@@ -41,6 +42,7 @@
     "eslint": "^2.5.1",
     "eslint-plugin-import": "^1.7.0",
     "eslint-plugin-react": "^5.1.1",
+    "in-publish": "^2.0.0",
     "readline-sync": "^1.4.1",
     "rimraf": "^2.5.2"
   },
