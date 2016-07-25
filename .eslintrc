@@ -15,6 +15,7 @@
   },
   "rules": {
     "prefer-arrow-callback": 2,
-    "semi": [ 2, "never" ]
+    "semi": [ 2, "never" ],
+    "react/no-danger": 0
   }
 }
