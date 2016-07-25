@@ -1,3 +1,4 @@
+import semver from 'semver'
 import React, { PropTypes } from 'react'
 import DirectoryListing from './DirectoryListing'
 import { readCSS } from '../StyleUtils'
@@ -10,6 +11,9 @@ s.onchange = function () {
 }
 `
 
+const byVersion = (a, b) =>
+  semver.lt(a, b) ? -1 : (semver.gt(a, b) ? 1 : 0)
+
 class IndexPage extends React.Component {
   static propTypes = {
     packageInfo: PropTypes.object.isRequired,
@@ -21,7 +25,7 @@ class IndexPage extends React.Component {
   render() {
     const { packageInfo, version, dir, entries } = this.props
 
-    const versions = Object.keys(packageInfo.versions)
+    const versions = Object.keys(packageInfo.versions).sort(byVersion)
     const options = versions.map(v => (
       <option key={v} value={v}>{packageInfo.name}@{v}</option>
     ))
