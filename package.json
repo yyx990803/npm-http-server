@@ -2,6 +2,7 @@
   "name": "npm-http-server",
   "version": "2.14.3",
   "description": "Serve files from npm packages over HTTP",
+  "repository": "mjackson/npm-http-server",
   "author": "Michael Jackson",
   "license": "MIT",
   "main": "lib",
@@ -45,10 +46,6 @@
     "in-publish": "^2.0.0",
     "readline-sync": "^1.4.1",
     "rimraf": "^2.5.2"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mjackson/npm-http-server.git"
   },
   "babel": {
     "presets": [
