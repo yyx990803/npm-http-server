@@ -115,19 +115,17 @@ export const createRequestHandler = (options = {}) => {
           return next(packageDir) // Best case: we already have this package on disk.
 
         // Fetch package info from NPM registry.
-        getPackageInfo(registryURL, packageName, (error, response) => {
+        getPackageInfo(registryURL, packageName, (error, packageInfo) => {
           if (error)
             return sendServerError(res, error)
 
-          if (response.status === 404)
+          if (packageInfo == null)
             return sendNotFoundError(res, `package "${packageName}"`)
 
-          const info = response.jsonData
-
-          if (info == null || info.versions == null)
+          if (packageInfo.versions == null)
             return sendServerError(res, new Error(`Unable to retrieve info for package ${packageName}`))
 
-          const { versions, 'dist-tags': tags } = info
+          const { versions, 'dist-tags': tags } = packageInfo
 
           if (version in versions) {
             // A valid request for a package we haven't downloaded yet.

@@ -18,7 +18,13 @@ const getPackageInfoFromRegistry = (registryURL, packageName, callback) => {
   const url = `${registryURL}/${encodedPackageName}`
 
   fetch(url).then(
-    response => callback(null, response),
+    response => {
+      if (response.status === 404) {
+        callback(null, null)
+      } else {
+        callback(null, response.jsonData)
+      }
+    },
     callback
   )
 }
