@@ -18,6 +18,14 @@ th, td {
   padding: 0.1em 0.25em;
 }
 
+.version-wrapper {
+  line-height: 2.25em;
+  float: right;
+}
+#version {
+  font-size: 1em;
+}
+
 address {
   text-align: right;
 }

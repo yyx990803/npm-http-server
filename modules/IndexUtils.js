@@ -29,7 +29,7 @@ const DOCTYPE = '<!DOCTYPE html>'
 const generateIndexPage = (props) =>
   DOCTYPE + renderToStaticMarkup(<IndexPage {...props}/>)
 
-export const generateDirectoryIndexHTML = (baseDir, dir, displayName, callback) =>
+export const generateDirectoryIndexHTML = (packageInfo, version, baseDir, dir, callback) =>
   getEntries(joinPaths(baseDir, dir))
-    .then(entries => generateIndexPage({ dir, displayName, entries }))
+    .then(entries => generateIndexPage({ packageInfo, version, dir, entries }))
     .then(html => callback(null, html), callback)

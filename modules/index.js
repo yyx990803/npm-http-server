@@ -232,11 +232,17 @@ export const createRequestHandler = (options = {}) => {
       } else if (stats == null || stats.isFile()) {
         sendFile(res, joinPaths(baseDir, path), stats, OneYear)
       } else if (autoIndex && stats.isDirectory()) {
-        generateDirectoryIndexHTML(baseDir, path, displayName, (error, html) => {
-          if (html) {
-            sendHTML(res, html, OneYear)
-          } else {
+        getPackageInfo(registryURL, packageName, (error, packageInfo) => {
+          if (error) {
             sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
+          } else {
+            generateDirectoryIndexHTML(packageInfo, version, baseDir, path, (error, html) => {
+              if (html) {
+                sendHTML(res, html, OneYear)
+              } else {
+                sendServerError(res, `unable to generate index page for ${displayName}${filename}`)
+              }
+            })
           }
         })
       } else {
