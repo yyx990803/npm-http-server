@@ -196,14 +196,19 @@ export const createRequestHandler = (options = {}) => {
             return sendText(res, 500, `error parsing ${displayName}/package.json: ${error.message}`)
           }
 
+          let mainFilename
           const queryMain = query && query.main
 
-          if (queryMain && !(queryMain in packageConfig))
-            return sendNotFoundError(res, `field "${queryMain}" in ${displayName}/package.json`)
+          if (queryMain) {
+            if (!(queryMain in packageConfig))
+              return sendNotFoundError(res, `field "${queryMain}" in ${displayName}/package.json`)
 
-          // Default main is index, same as npm.
-          const mainProperty = queryMain || 'main'
-          const mainFilename = packageConfig[mainProperty] || 'index'
+            mainFilename = packageConfig[queryMain]
+          } else {
+            // First check "browser" then "main". If neither are
+            // present, use "index" (same as npm).
+            mainFilename = packageConfig.browser || packageConfig.main || 'index'
+          }
 
           resolveFile(joinPaths(packageDir, mainFilename), true, (error, file, stats) => {
             if (error) {
