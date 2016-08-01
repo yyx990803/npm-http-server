@@ -21,6 +21,7 @@
     "archiver": "^1.0.0",
     "byte-size": "^2.0.0",
     "csso": "^2.0.0",
+    "debug": "^2.2.0",
     "gunzip-maybe": "^1.2.1",
     "http-client": "^4.0.0",
     "isomorphic-fetch": "^2.2.1",

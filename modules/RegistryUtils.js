@@ -1,9 +1,9 @@
-import util from 'util'
+import debug from 'debug'
 import 'isomorphic-fetch'
 import { createFetch, accept, parseJSON } from 'http-client'
 import createLRUCache from 'lru-cache'
 
-const debug = util.debuglog('npm-http-server')
+const log = debug('npm-http-server')
 
 const fetch = createFetch(
   accept('application/json'),
@@ -45,7 +45,7 @@ export const getPackageInfo = (registryURL, packageName, callback) => {
   if (info) {
     callback(null, info)
   } else {
-    debug('Registry cache miss for package %s', packageName)
+    log('Registry cache miss for package %s', packageName)
 
     getPackageInfoFromRegistry(registryURL, packageName, (error, registryInfo) => {
       if (registryInfo)

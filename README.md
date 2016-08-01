@@ -72,4 +72,4 @@ To get a Bower bundle from a package that supports it use the `/bower.zip` file 
 
 ## Debugging
 
-To enable debug output, set `NODE_DEBUG=npm-http-server` in your environment.
+To enable debug console output, set `DEBUG=npm-http-server` in your environment.
