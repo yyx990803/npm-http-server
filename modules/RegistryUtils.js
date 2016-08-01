@@ -49,7 +49,7 @@ export const getPackageInfo = (registryURL, packageName, callback) => {
     info => callback(null, info),
     error => {
       RegistryCache.del(cacheKey)
-      throw error
+      callback(error)
     }
   )
 }
