@@ -30,7 +30,7 @@ const getPackageInfoFromRegistry = (registryURL, packageName) => {
 
 const OneMinute = 60 * 1000
 const RegistryCache = createLRUCache({
-  max: 500,
+  max: 1000,
   maxAge: OneMinute
 })
 
