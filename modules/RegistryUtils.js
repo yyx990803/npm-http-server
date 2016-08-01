@@ -48,7 +48,7 @@ export const getPackageInfo = (registryURL, packageName, callback) => {
     log('Registry cache miss for package %s', packageName)
 
     getPackageInfoFromRegistry(registryURL, packageName, (error, registryInfo) => {
-      if (registryInfo)
+      if (!error)
         RegistryCache.set(cacheKey, registryInfo)
 
       callback(error, registryInfo)
