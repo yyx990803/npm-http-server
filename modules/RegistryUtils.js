@@ -10,7 +10,7 @@ const fetch = createFetch(
   parseJSON()
 )
 
-const getPackageInfoFromRegistry = (registryURL, packageName, callback) => {
+const getPackageInfoFromRegistry = (registryURL, packageName) => {
   let encodedPackageName
   if (packageName.charAt(0) === '@') {
     encodedPackageName = `@${encodeURIComponent(packageName.substring(1))}`
@@ -20,16 +20,12 @@ const getPackageInfoFromRegistry = (registryURL, packageName, callback) => {
 
   const url = `${registryURL}/${encodedPackageName}`
 
-  fetch(url).then(
-    response => {
-      if (response.status === 404) {
-        callback(null, null)
-      } else {
-        callback(null, response.jsonData)
-      }
-    },
-    callback
-  )
+  return fetch(url).then(response => {
+    if (response.status === 404)
+      return null
+
+    return response.jsonData
+  })
 }
 
 const OneMinute = 60 * 1000
@@ -40,18 +36,20 @@ const RegistryCache = createLRUCache({
 
 export const getPackageInfo = (registryURL, packageName, callback) => {
   const cacheKey = registryURL + packageName
-  const info = RegistryCache.get(cacheKey)
 
-  if (info) {
-    callback(null, info)
-  } else {
+  let promise = RegistryCache.get(cacheKey)
+
+  if (!promise) {
     log('Registry cache miss for package %s', packageName)
-
-    getPackageInfoFromRegistry(registryURL, packageName, (error, registryInfo) => {
-      if (!error)
-        RegistryCache.set(cacheKey, registryInfo)
-
-      callback(error, registryInfo)
-    })
+    promise = getPackageInfoFromRegistry(registryURL, packageName)
+    RegistryCache.set(cacheKey, promise)
   }
+
+  promise.then(
+    info => callback(null, info),
+    error => {
+      RegistryCache.del(cacheKey)
+      throw error
+    }
+  )
 }
