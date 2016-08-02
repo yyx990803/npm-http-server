@@ -205,9 +205,13 @@ export const createRequestHandler = (options = {}) => {
 
             mainFilename = packageConfig[queryMain]
           } else {
-            // First check "browser" then "main". If neither are
-            // present, use "index" (same as npm).
-            mainFilename = packageConfig.browser || packageConfig.main || 'index'
+            // We only support the "alternate main" browser spec for now.
+            if (typeof packageConfig.browser === 'string') {
+              mainFilename = packageConfig.browser
+            } else {
+              // If there is no main, use "index" (same as npm).
+              mainFilename = packageConfig.main || 'index'
+            }
           }
 
           resolveFile(joinPaths(packageDir, mainFilename), true, (error, file, stats) => {
