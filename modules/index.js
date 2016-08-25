@@ -199,7 +199,7 @@ export const createRequestHandler = (options = {}) => {
           try {
             packageConfig = JSON.parse(data)
           } catch (error) {
-            return sendText(res, 500, `error parsing ${displayName}/package.json: ${error.message}`)
+            return sendText(res, 500, `Error parsing ${displayName}/package.json: ${error.message}`)
           }
 
           let mainFilename
