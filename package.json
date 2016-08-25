@@ -46,14 +46,6 @@
     "eslint-plugin-import": "^1.7.0",
     "eslint-plugin-react": "^6.0.0",
     "in-publish": "^2.0.0",
-    "readline-sync": "^1.4.1",
-    "rimraf": "^2.5.2"
-  },
-  "babel": {
-    "presets": [
-      "es2015-loose",
-      "stage-1",
-      "react"
-    ]
+    "readline-sync": "^1.4.1"
   }
 }
