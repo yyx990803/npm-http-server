@@ -95,7 +95,7 @@ export const createRequestHandler = (options = {}) => {
   const redirectTTL = options.redirectTTL || 0
   const autoIndex = options.autoIndex !== false
   const maximumDepth = options.maximumDepth || Number.MAX_VALUE
-  const blacklist = options.blacklist || {}
+  const blacklist = options.blacklist || []
 
   const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
@@ -106,7 +106,7 @@ export const createRequestHandler = (options = {}) => {
     const { pathname, search, query, packageName, version, filename } = url
     const displayName = `${packageName}@${version}`
 
-    const isBlacklisted = blacklist[packageName]
+    const isBlacklisted = blacklist.indexOf(packageName) !== -1
 
     if (isBlacklisted)
       return sendText(res, 403, `Package ${packageName} is blacklisted`)
