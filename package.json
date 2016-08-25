@@ -5,17 +5,13 @@
   "repository": "mjackson/npm-http-server",
   "author": "Michael Jackson",
   "license": "MIT",
-  "main": "lib",
-  "files": [
-    "lib"
-  ],
   "scripts": {
-    "test": "npm run lint",
-    "lint": "eslint modules",
     "build": "node ./scripts/build.js",
-    "build-lib": "rimraf lib && babel ./modules -d lib --copy-files",
+    "build-lib": "babel ./modules -d . --copy-files",
     "release": "node ./scripts/release.js",
-    "prepublish": "node ./scripts/build.js"
+    "prepublish": "node ./scripts/build.js",
+    "lint": "eslint modules",
+    "test": "npm run lint"
   },
   "dependencies": {
     "archiver": "^1.0.0",
