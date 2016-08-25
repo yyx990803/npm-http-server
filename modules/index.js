@@ -95,6 +95,7 @@ export const createRequestHandler = (options = {}) => {
   const redirectTTL = options.redirectTTL || 0
   const autoIndex = options.autoIndex !== false
   const maximumDepth = options.maximumDepth || Number.MAX_VALUE
+  const blacklist = options.blacklist || {}
 
   const handleRequest = (req, res) => {
     const url = parsePackageURL(req.url)
@@ -104,6 +105,11 @@ export const createRequestHandler = (options = {}) => {
 
     const { pathname, search, query, packageName, version, filename } = url
     const displayName = `${packageName}@${version}`
+
+    const isBlacklisted = blacklist[packageName]
+
+    if (isBlacklisted)
+      return sendText(res, 403, `Package ${packageName} is blacklisted`)
 
     // Step 1: Fetch the package from the registry and store a local copy.
     // Redirect if the URL does not specify an exact version number.
