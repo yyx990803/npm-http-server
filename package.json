@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "archiver": "^1.0.0",
-    "byte-size": "^3.0.0",
+    "byte-size": "^2.0.0",
     "csso": "^2.0.0",
     "debug": "^2.2.0",
     "gunzip-maybe": "^1.2.1",
