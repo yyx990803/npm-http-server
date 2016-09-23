@@ -57,8 +57,13 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
 export const sendFile = (res, file, stats, maxAge = 0) =>
   Promise.resolve(stats || getStats(file))
     .then(stats => {
+      let contentType = getContentType(file)
+
+      if (contentType === 'text/html')
+        contentType = 'text/plain' // We can't serve HTML because bad people :(
+
       res.writeHead(200, {
-        'Content-Type': `${getContentType(file)}; charset=utf-8`,
+        'Content-Type': contentType,
         'Content-Length': stats.size,
         'Cache-Control': `public, max-age=${maxAge}`
       })
