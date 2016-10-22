@@ -1,6 +1,6 @@
 import 'isomorphic-fetch'
 import debug from 'debug'
-import createLRUCache from 'lru-cache'
+import RegistryCache from './RegistryCache'
 
 const log = debug('npm-http-server')
 
@@ -27,42 +27,36 @@ const getPackageInfoFromRegistry = (registryURL, packageName) => {
 }
 
 const OneMinute = 60 * 1000
-const RegistryCache = createLRUCache({
-  max: 1000
-})
+const PackageNotFound = 'PackageNotFound'
 
 export const getPackageInfo = (registryURL, packageName, callback) => {
   const cacheKey = registryURL + packageName
 
-  let promise = RegistryCache.get(cacheKey)
+  RegistryCache.get(cacheKey, (error, value) => {
+    if (error) {
+      callback(error)
+    } else if (value) {
+      callback(null, value === PackageNotFound ? null : value)
+    } else {
+      log('Registry cache miss for package %s', packageName)
 
-  if (!promise) {
-    log('Registry cache miss for package %s', packageName)
+      getPackageInfoFromRegistry(registryURL, packageName).then(value => {
+        if (value == null) {
+          // Keep 404s in the cache for 5 minutes. This prevents us
+          // from making unnecessary requests to the registry for
+          // bad package names. In the worst case, a brand new
+          // package's info will be available within 5 minutes.
+          RegistryCache.set(cacheKey, PackageNotFound, OneMinute * 5)
+        } else {
+          RegistryCache.set(cacheKey, value, OneMinute)
+        }
 
-    promise = getPackageInfoFromRegistry(registryURL, packageName)
-
-    // Immediately cache the promise so we don't make concurrent
-    // requests for the same package in the same minute.
-    RegistryCache.set(cacheKey, promise, OneMinute)
-
-    promise.then(
-      value => {
-        // Keep 404s in the cache for 5 minutes. This prevents us
-        // from making unnecessary requests to the registry for
-        // bad package names. In the worst case, a brand new
-        // package's info will be available within 5 minutes.
-        if (value == null)
-          RegistryCache.set(cacheKey, promise, OneMinute * 5)
-
-        return value
-      },
-      error => {
+        callback(null, value)
+      }, error => {
         // Do not cache errors.
         RegistryCache.del(cacheKey)
-        throw error
-      }
-    )
-  }
-
-  promise.then(value => callback(null, value), callback)
+        callback(error)
+      })
+    }
+  })
 }
