@@ -1,14 +1,8 @@
-import debug from 'debug'
 import 'isomorphic-fetch'
-import { createFetch, accept, parseJSON } from 'http-client'
+import debug from 'debug'
 import createLRUCache from 'lru-cache'
 
 const log = debug('npm-http-server')
-
-const fetch = createFetch(
-  accept('application/json'),
-  parseJSON()
-)
 
 const getPackageInfoFromRegistry = (registryURL, packageName) => {
   let encodedPackageName
@@ -20,11 +14,15 @@ const getPackageInfoFromRegistry = (registryURL, packageName) => {
 
   const url = `${registryURL}/${encodedPackageName}`
 
-  return fetch(url).then(response => {
+  return fetch(url, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(response => {
     if (response.status === 404)
       return null
 
-    return response.jsonData
+    return response.json()
   })
 }
 

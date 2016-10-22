@@ -19,7 +19,6 @@
     "csso": "^2.0.0",
     "debug": "^2.2.0",
     "gunzip-maybe": "^1.2.1",
-    "http-client": "^4.0.0",
     "isomorphic-fetch": "^2.2.1",
     "lru-cache": "^4.0.1",
     "mime": "^1.3.4",
