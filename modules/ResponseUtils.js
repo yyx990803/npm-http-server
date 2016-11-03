@@ -1,4 +1,5 @@
 import fs from 'fs'
+import etag from 'etag'
 import { getContentType, getStats } from './FileUtils'
 
 export const sendText = (res, statusCode, text) => {
@@ -48,7 +49,7 @@ export const sendRedirect = (res, location, maxAge = 0, statusCode = 302) => {
     'Content-Type': 'text/html',
     'Content-Length': html.length,
     'Cache-Control': `public, max-age=${maxAge}`,
-    Location: location
+    'Location': location
   })
 
   res.end(html)
@@ -65,7 +66,8 @@ export const sendFile = (res, file, stats, maxAge = 0) =>
       res.writeHead(200, {
         'Content-Type': contentType,
         'Content-Length': stats.size,
-        'Cache-Control': `public, max-age=${maxAge}`
+        'Cache-Control': `public, max-age=${maxAge}`,
+        'ETag': etag(stats)
       })
 
       const stream = fs.createReadStream(file)
