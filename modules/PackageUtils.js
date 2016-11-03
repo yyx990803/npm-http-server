@@ -1,5 +1,4 @@
 import 'isomorphic-fetch'
-import { fetch } from 'http-client'
 import { parse as parseURL } from 'url'
 import gunzip from 'gunzip-maybe'
 import mkdirp from 'mkdirp'
