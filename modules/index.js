@@ -211,8 +211,12 @@ export const createRequestHandler = (options = {}) => {
 
             mainFilename = packageConfig[queryMain]
           } else {
-            // We only support the "alternate main" browser spec for now.
-            if (typeof packageConfig.browser === 'string') {
+            // The "unpkg" field allows packages to explicitly declare the
+            // file to serve at the bare URL.
+            if (typeof packageConfig.unpkg === 'string') {
+              mainFilename = packageConfig.unpkg
+            } else if (typeof packageConfig.browser === 'string') {
+              // fallback to the "browser" field if declared
               mainFilename = packageConfig.browser
             } else {
               // If there is no main, use "index" (same as npm).
